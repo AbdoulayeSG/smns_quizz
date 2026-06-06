@@ -514,7 +514,134 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;
   to{transform:scale(1.03);}
 }
 
+
 </style>
+<script type="module">
+// Firebase Realtime Database (CDN ESM)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// ─── CONFIG FIREBASE ───
+const FIREBASE_URL = "https://quiz-6b26a-default-rtdb.firebaseio.com";
+window._firebaseReady = true;
+
+const app = initializeApp({
+  apiKey: "AIzaSyCuyNYkXl2oQFJV3IZEGYiY3BoC5u3fYfM",
+  authDomain: "quiz-6b26a.firebaseapp.com",
+  databaseURL: "https://quiz-6b26a-default-rtdb.firebaseio.com",
+  projectId: "quiz-6b26a",
+  storageBucket: "quiz-6b26a.firebasestorage.app",
+  messagingSenderId: "870506802682",
+  appId: "1:870506802682:web:7c6f1f70af5386d8b0c843"
+}, 'genie');
+const db = getDatabase(app);
+
+// ─── SESSION ID (généré une fois, partagé via URL) ───
+function genSession(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s='GH-';
+  for(let i=0;i<4;i++) s+=chars[Math.floor(Math.random()*chars.length)];
+  return s;
+}
+
+const __urlp = new URLSearchParams(window.location.search);
+let SESSION_ID = __urlp.get('session') || sessionStorage.getItem('genie_session');
+if(!SESSION_ID){ SESSION_ID = genSession(); }
+sessionStorage.setItem('genie_session', SESSION_ID);
+
+// Expose globally
+window.FIREBASE_SESSION = SESSION_ID;
+window.fbDb = db;
+window.fbRef = ref;
+window.fbSet = set;
+window.fbOnValue = onValue;
+window.fbRemove = remove;
+
+// ─── FIREBASE WRAPPERS (remplacent localStorage) ───
+
+window.publishDisplayState = function(){
+  const data = currentDisplayData();
+  set(ref(db, `sessions/${SESSION_ID}/display`), data).catch(()=>{});
+};
+
+window.getBuzzerState = function(){
+  // synchronous read from local cache (updated by onValue listener)
+  return window._buzzerCache || null;
+};
+
+window.setBuzzerState = function(st){
+  if(st){
+    set(ref(db, `sessions/${SESSION_ID}/buzzer`), st).catch(()=>{});
+  } else {
+    remove(ref(db, `sessions/${SESSION_ID}/buzzer`)).catch(()=>{});
+  }
+};
+
+// ─── LISTENERS temps réel ───
+
+// Buzzer state listener (all devices)
+onValue(ref(db, `sessions/${SESSION_ID}/buzzer`), snap => {
+  window._buzzerCache = snap.exists() ? snap.val() : null;
+  if(typeof renderBuzzerStatus === 'function') renderBuzzerStatus();
+  if(typeof updateBuzzerClientStatus === 'function') updateBuzzerClientStatus();
+  if(typeof renderBuzzerTeamButtons === 'function') renderBuzzerTeamButtons();
+});
+
+// Display state listener (TV screen / buzzer clients)
+onValue(ref(db, `sessions/${SESSION_ID}/display`), snap => {
+  if(!snap.exists()) return;
+  const data = snap.val();
+  // Update local teams cache for buzzer clients
+  if(Array.isArray(data.teams)) window._teamsCache = data.teams;
+  if(document.body.classList.contains('tv-display-mode')){
+    if(typeof renderDisplayData === 'function') renderDisplayData(data);
+  }
+  if(typeof updateBuzzerClientStatus === 'function') updateBuzzerClientStatus();
+  if(typeof renderBuzzerTeamButtons === 'function') renderBuzzerTeamButtons();
+});
+
+// Override getBuzzerTeams to use Firebase cache
+window.getBuzzerTeams = function(){
+  if(window._teamsCache && window._teamsCache.length) return window._teamsCache;
+  return (typeof S !== 'undefined' && S.teams) ? S.teams : [];
+};
+
+// ─── SESSION UI ───
+window.getSessionId = function(){ return SESSION_ID; };
+
+window.getSessionLink = function(type, teamIndex){
+  const u = new URL(window.location.href);
+  u.searchParams.delete('display');
+  u.searchParams.delete('buzzer');
+  u.searchParams.delete('team');
+  u.searchParams.set('session', SESSION_ID);
+  if(type==='display') u.searchParams.set('display','1');
+  if(type==='buzzer'){
+    u.searchParams.set('buzzer','1');
+    if(teamIndex!=null) u.searchParams.set('team', String(teamIndex));
+  }
+  return u.href;
+};
+
+// Patch tvLink and buzzerLink to include session
+window.tvLink = function(){
+  return getSessionLink('display');
+};
+window.buzzerLink = function(index=null){
+  return getSessionLink('buzzer', index);
+};
+
+// Show session badge once DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  const badge = document.getElementById('session-badge');
+  if(badge){
+    badge.textContent = '🔗 Session : ' + SESSION_ID;
+    badge.title = 'Code de session partagé — visible sur tous les appareils connectés';
+  }
+});
+
+console.log('[Génie en Herbe] Firebase session:', SESSION_ID);
+</script>
 </head>
 <body>
 
@@ -556,6 +683,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;
 <div id="game" class="screen">
   <div class="game-header">
     <div class="game-logo">Génie en Herbe</div>
+    <div id="session-badge" style="font-size:.72rem;font-weight:800;color:var(--b300);background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:3px 10px;letter-spacing:1px;cursor:default;"></div>
     <div class="q-counter" id="qctr"></div>
     <button class="btn btn-ghost btn-sm" onclick="go('admin')">⚙ Admin</button>
   </div>
@@ -1312,10 +1440,7 @@ function currentDisplayData(){
   };
 }
 
-function publishDisplayState(){
-  try{localStorage.setItem('genie_display_state', JSON.stringify(currentDisplayData()));}
-  catch(e){}
-}
+function publishDisplayState(){ if(window.fbSet&&window.FIREBASE_SESSION){ window.publishDisplayState(); } }
 
 function renderDisplayData(data){
   if(!data)return;
@@ -1349,26 +1474,18 @@ function startDisplayMode(){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const fs=document.getElementById('fscreen');
   fs.classList.add('vis');
-  function refresh(){
-    try{renderDisplayData(JSON.parse(localStorage.getItem('genie_display_state')||'{}'));}
-    catch(e){}
-  }
-  refresh();
-  setInterval(refresh,500);
+  // Firebase onValue listener handles real-time updates (see module script)
+  // Fallback: show session info
+  const badge = document.getElementById('session-badge');
+  if(badge) badge.style.display = 'none';
 }
 
 
 // ─── BUZZERS ───
-function getBuzzerState(){
-  try{return JSON.parse(localStorage.getItem('genie_buzzer_state')||'null');}
-  catch(e){return null;}
-}
-function setBuzzerState(st){
-  try{
-    if(st)localStorage.setItem('genie_buzzer_state',JSON.stringify(st));
-    else localStorage.removeItem('genie_buzzer_state');
-  }catch(e){}
-}
+// getBuzzerState / setBuzzerState / getBuzzerTeams overridden by Firebase module
+// Stubs for before module loads:
+function getBuzzerState(){ return window._buzzerCache || null; }
+function setBuzzerState(st){ if(window.fbSet){ window.setBuzzerState(st); } }
 function buzzerLink(index=null){
   const u=new URL(window.location.href);
   u.searchParams.delete('display');
@@ -1449,13 +1566,7 @@ function renderBuzzerStatus(){
     }
   }
 }
-function getBuzzerTeams(){
-  try{
-    const data=JSON.parse(localStorage.getItem('genie_display_state')||'{}');
-    if(Array.isArray(data.teams)&&data.teams.length)return data.teams;
-  }catch(e){}
-  return S.teams||[];
-}
+function getBuzzerTeams(){ return (window._teamsCache&&window._teamsCache.length)?window._teamsCache:(S.teams||[]); }
 function selectedBuzzerTeamIndex(){
   const sp=new URLSearchParams(window.location.search);
   const raw=sp.get('team');
@@ -1469,7 +1580,7 @@ function startBuzzerMode(){
   bs.classList.add('active');
   renderBuzzerTeamButtons();
   updateBuzzerClientStatus();
-  setInterval(()=>{renderBuzzerTeamButtons();updateBuzzerClientStatus();},500);
+  // Firebase onValue replaces polling for buzzer clients
 }
 function renderBuzzerTeamButtons(){
   const list=document.getElementById('buzzer-teams-list');
@@ -1542,7 +1653,7 @@ function pressBuzzer(index){
   updateBuzzerClientStatus();
   renderBuzzerTeamButtons();
 }
-setInterval(()=>{renderBuzzerStatus();},500);
+// Firebase onValue replaces polling for buzzer status
 
 // ─── FULLSCREEN QUESTION ───
 function openFscreen(){
@@ -1608,6 +1719,9 @@ const __sp=new URLSearchParams(window.location.search);
 if(__sp.get('display')==='1'){startDisplayMode();}
 else if(__sp.get('buzzer')==='1'){startBuzzerMode();}
 else{renderSetup();}
+
+}
+
 </script>
 </body>
 </html>
