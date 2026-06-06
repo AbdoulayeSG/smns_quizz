@@ -657,6 +657,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;
   .adm-body{font-size:.85rem;}
 }
 
+
+/* IMAGE QUESTION */
+.q-image{max-width:100%;max-height:50vh;border-radius:14px;margin:1rem auto;display:block;box-shadow:0 8px 32px rgba(0,0,0,.35);}
+#fs-qimage{max-width:78%;max-height:48vh;border-radius:18px;margin:1rem auto;display:block;box-shadow:0 12px 40px rgba(0,0,0,.25);}
+.qtype-btn.active{background:#f15a24;color:#fff;}
 </style>
 <script type="module">
 // Firebase Realtime Database (CDN ESM)
@@ -723,7 +728,14 @@ window.setBuzzerState = function(st){
 
 // Buzzer state listener (all devices)
 onValue(ref(db, `sessions/${SESSION_ID}/buzzer`), snap => {
+  const prev = window._buzzerCache;
   window._buzzerCache = snap.exists() ? snap.val() : null;
+  const cur = window._buzzerCache;
+  const nowLocked = cur && cur.locked;
+  const sameBuzz = prev && cur && prev.time === cur.time;
+  if(nowLocked && !sameBuzz && typeof playBuzzer === 'function'){
+    try { playBuzzer(); } catch(e){}
+  }
   if(typeof renderBuzzerStatus === 'function') renderBuzzerStatus();
   if(typeof updateBuzzerClientStatus === 'function') updateBuzzerClientStatus();
   if(typeof renderBuzzerTeamButtons === 'function') renderBuzzerTeamButtons();
@@ -858,6 +870,7 @@ console.log('[Génie en Herbe] Firebase session:', SESSION_ID);
     <div class="q-card" id="qcard">
       <div class="q-num" id="qnum"></div>
       <div class="q-cat" id="qcat">Génie en Herbe</div>
+      <img id="qimage" class="q-image" style="display:none;" alt="" />
       <div class="q-text" id="qtext"><span style="color:rgba(255,255,255,.18);font-size:1.1rem;">Sélectionnez une question dans le panneau Admin</span></div>
       <div class="ans-block" id="ansblock" style="display:none;">
         <div class="ans-lbl">Réponse</div>
@@ -911,7 +924,8 @@ console.log('[Génie en Herbe] Firebase session:', SESSION_ID);
           <label>Type</label>
           <div style="display:flex;gap:.5rem;">
             <button id="qtype-normal" class="btn btn-sm qtype-btn active" onclick="setQType('normal')" style="flex:1;">Standard</button>
-            <button id="qtype-indice" class="btn btn-sm qtype-btn" onclick="setQType('indice')" style="flex:1;">Indice (5 indices)</button>
+            <button id="qtype-indice" class="btn btn-sm qtype-btn" onclick="setQType('indice')" style="flex:1;">Indice</button>
+            <button id="qtype-image" class="btn btn-sm qtype-btn" onclick="setQType('image')" style="flex:1;">C'est quoi/qui ?</button>
           </div>
         </div>
 
@@ -925,6 +939,7 @@ console.log('[Génie en Herbe] Firebase session:', SESSION_ID);
               <option value="Réplique">Réplique</option>
               <option value="30pts">30 pts</option>
               <option value="Indice">Indice</option>
+              <option value="C'est quoi/qui ?">C'est quoi/qui ?</option>
               <option disabled>──────</option>
               <option value="Sciences">Sciences</option>
               <option value="Histoire">Histoire</option>
@@ -948,6 +963,17 @@ console.log('[Génie en Herbe] Firebase session:', SESSION_ID);
           <div class="fgrp">
             <label>Question</label>
             <textarea id="aq" rows="3" placeholder="Entrez la question ici..."></textarea>
+          </div>
+        </div>
+
+        <!-- Image (C'est quoi/qui ?) -->
+        <div id="qform-image" style="display:none;">
+          <div class="fgrp">
+            <label>Image (C'est quoi/qui ?)</label>
+            <input id="aimg-file" type="file" accept="image/*" onchange="handleImgUpload(event)" />
+            <div style="margin-top:.5rem;"><img id="aimg-preview" style="display:none;max-width:100%;max-height:180px;border-radius:8px;border:1px solid rgba(255,255,255,.1);" /></div>
+            <input type="hidden" id="aimg-data" />
+            <div style="font-size:.7rem;color:var(--g500);margin-top:.4rem;">La réponse ci-dessous sera le nom révélé.</div>
           </div>
         </div>
 
@@ -1040,6 +1066,7 @@ console.log('[Génie en Herbe] Firebase session:', SESSION_ID);
   <div class="fs-question-wrap">
     <div class="fs-big-mark">?</div>
     <div class="fs-cat" id="fs-cat">Génie en Herbe</div>
+    <img id="fs-qimage" alt="" style="display:none;" />
     <div class="fs-qtext" id="fs-qtext"></div>
     <div class="fs-pts" id="fs-pts"></div>
   </div>
@@ -1131,6 +1158,12 @@ function playTick(v){
   v<=3?beep(1100,.15,.3):beep(900,.07,.18);
 }
 function playCountBeep(n){n>0?beep(660,.3,.4):beep(900,.5,.5);}
+function playBuzzer(){
+  const c=ga();if(!c)return;
+  beep(220,.18,.45,'square',0);
+  beep(180,.22,.45,'square',.16);
+  beep(140,.35,.5,'sawtooth',.36);
+}
 
 // ─── SCREEN ───
 function go(id){
@@ -1239,20 +1272,30 @@ function renderQ(){
   const q=S.qs[S.curQ];
   const qt=document.getElementById('qtext'),qc=document.getElementById('qcat'),
         qn=document.getElementById('qnum'),ab=document.getElementById('ansblock'),
-        at=document.getElementById('anstext');
+        at=document.getElementById('anstext'),qi=document.getElementById('qimage');
+  if(qi){qi.style.display='none';qi.src='';}
   if(!q){
     qt.innerHTML='<span style="color:rgba(255,255,255,.18);font-size:1.05rem;">Sélectionnez une question dans Admin</span>';
-    qc.textContent='Génie en Herbe';qn.textContent='';ab.style.display='none';return;
+    qc.textContent='Génie en Herbe';qn.textContent='';ab.style.display='none';
+    publishDisplayState();return;
   }
-  qc.textContent=q.cat;qn.textContent=`${S.curQ+1} / ${S.qs.length}`;qt.textContent=Array.isArray(q.question)?q.question.join(' • '):(q.q||q.question||'');
+  qc.textContent=q.cat;qn.textContent=`${S.curQ+1} / ${S.qs.length}`;
+  if(q.type==='image' && q.img){
+    qt.textContent="C'est quoi/qui ?";
+    if(qi){qi.src=q.img;qi.style.display='block';}
+  } else {
+    qt.textContent=Array.isArray(q.question)?q.question.join(' • '):(q.q||q.question||'');
+  }
   if(S.showAns){ab.style.display='block';at.textContent=q.a;}
   else ab.style.display='none';
+  publishDisplayState();
 }
 
 function toggleAns(){
   S.showAns=!S.showAns;
   document.getElementById('revbtn').textContent=S.showAns?'Masquer réponse':'Révéler réponse';
   renderQ();
+  publishDisplayState();
 }
 
 function navQ(d){
@@ -1261,6 +1304,7 @@ function navQ(d){
   S.curQ=nq;S.showAns=false;
   document.getElementById('revbtn').textContent='Révéler réponse';
   renderQ();renderQCtr();
+  publishDisplayState();
   if(S.curScreen==='admin')renderAdmin();
 }
 
@@ -1363,15 +1407,33 @@ function setQType(t){
   _qtype = t;
   document.getElementById('qtype-normal').classList.toggle('active', t==='normal');
   document.getElementById('qtype-indice').classList.toggle('active', t==='indice');
+  const imgBtn=document.getElementById('qtype-image');
+  if(imgBtn) imgBtn.classList.toggle('active', t==='image');
   document.getElementById('qform-normal').style.display = t==='normal' ? '' : 'none';
   document.getElementById('qform-indice').style.display = t==='indice' ? '' : 'none';
+  const imgForm=document.getElementById('qform-image');
+  if(imgForm) imgForm.style.display = t==='image' ? '' : 'none';
   document.getElementById('fgrp-pts').style.display = t==='indice' ? 'none' : '';
-  // Auto-sélectionner catégorie "Indice" si on passe en mode indice
   if(t==='indice'){
     const sel = document.getElementById('acat-sel');
-    sel.value = 'Indice';
-    syncCat();
+    sel.value = 'Indice'; syncCat();
   }
+  if(t==='image'){
+    const sel = document.getElementById('acat-sel');
+    sel.value = "C'est quoi/qui ?"; syncCat();
+  }
+}
+
+function handleImgUpload(ev){
+  const f=ev.target.files[0]; if(!f) return;
+  if(f.size > 800*1024){ toast('Image lourde — recommandation < 800 KB'); }
+  const r=new FileReader();
+  r.onload=e=>{
+    document.getElementById('aimg-data').value=e.target.result;
+    const p=document.getElementById('aimg-preview');
+    p.src=e.target.result; p.style.display='block';
+  };
+  r.readAsDataURL(f);
 }
 
 // ── Synchronisation catégorie select ↔ input libre ──
@@ -1417,6 +1479,14 @@ function addQ(){
     if(indices.length < 2){ toast('Minimum 2 indices requis'); return; }
     newQ = { cat, pts:'50-10', question: indices, a };
     [1,2,3,4,5].forEach(n => { document.getElementById('ai'+n).value=''; });
+  } else if(_qtype === 'image'){
+    const img = document.getElementById('aimg-data').value;
+    const pts = parseInt(document.getElementById('ap').value)||10;
+    if(!img){ toast('Sélectionne une image'); return; }
+    newQ = { type:'image', q:"C'est quoi/qui ?", a, cat, pts, img };
+    document.getElementById('aimg-data').value='';
+    document.getElementById('aimg-file').value='';
+    const pv=document.getElementById('aimg-preview'); pv.style.display='none'; pv.src='';
   } else {
     const q = document.getElementById('aq').value.trim();
     const pts = parseInt(document.getElementById('ap').value)||10;
@@ -1667,10 +1737,14 @@ function fallbackCopy(text){
 
 function currentDisplayData(){
   const q=S.qs[S.curQ];
+  const isImg = q && q.type==='image';
   return {
-    qText:q ? (Array.isArray(q.question)?q.question.join('  •  '):(q.q||'')) : '',
+    qText:q ? (isImg ? "C'est quoi/qui ?" : (Array.isArray(q.question)?q.question.join('  •  '):(q.q||''))) : '',
     cat:q ? q.cat : 'Génie en Herbe',
     pts:q ? q.pts : 0,
+    img: isImg ? q.img : null,
+    showAns: !!S.showAns,
+    answer: (S.showAns && q) ? q.a : '',
     teams:S.teams || [],
     timer: typeof S.tv==='number' ? S.tv : 10,
     buzzer: getBuzzerState()
@@ -1688,8 +1762,15 @@ function renderDisplayData(data){
   if(!data)return;
   document.getElementById('fs-cat').textContent=data.cat || 'Génie en Herbe';
   const qtext = document.getElementById('fs-qtext');
-  qtext.textContent=data.qText || '';
-  qtext.style.opacity=''; // effacer le style d'attente
+  const qimg = document.getElementById('fs-qimage');
+  if(qimg){
+    if(data.img){ qimg.src=data.img; qimg.style.display='block'; }
+    else { qimg.style.display='none'; qimg.src=''; }
+  }
+  let txt = data.qText || '';
+  if(data.showAns && data.answer){ txt = txt + '  →  ' + data.answer; }
+  qtext.textContent = txt;
+  qtext.style.opacity='';
   const pts=data.pts || 0;
   document.getElementById('fs-pts').textContent= pts ? `${pts} point${String(pts).includes('-')||(+pts)>1?'s':''}` : '';
   const bt=document.getElementById('fs-board-timer');
@@ -1901,6 +1982,8 @@ function pressBuzzer(index){
   if(!t)return;
   const st=getBuzzerState();
   if(st&&st.locked){updateBuzzerClientStatus();return;}
+  ga();
+  try { if(typeof playBuzzer==='function') playBuzzer(); } catch(e){}
   setBuzzerState({locked:true,index:index,name:t.name||('Équipe '+(index+1)),color:t.color||COLORS[index%COLORS.length],time:Date.now()});
   updateBuzzerClientStatus();
   renderBuzzerTeamButtons();
@@ -1916,7 +1999,14 @@ function openFscreen(){
 
   // Texte de la question
   document.getElementById('fs-cat').textContent=q.cat;
-  document.getElementById('fs-qtext').textContent = Array.isArray(q.question) ? q.question.join('  •  ') : (q.q || q.question || '');
+  const fqimg=document.getElementById('fs-qimage');
+  if(q.type==='image' && q.img){
+    if(fqimg){fqimg.src=q.img;fqimg.style.display='block';}
+    document.getElementById('fs-qtext').textContent="C'est quoi/qui ?";
+  } else {
+    if(fqimg){fqimg.style.display='none';fqimg.src='';}
+    document.getElementById('fs-qtext').textContent = Array.isArray(q.question) ? q.question.join('  •  ') : (q.q || q.question || '');
+  }
   const pts=q.pts;
   document.getElementById('fs-pts').textContent=`${pts} point${String(pts).includes('-')||(+pts)>1?'s':''}`;
   const boardTimer=document.getElementById('fs-board-timer');
