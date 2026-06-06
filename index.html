@@ -490,6 +490,173 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;
   color:#fff;font-size:.85rem;outline:none;box-sizing:border-box;
 }
 
+/* ====================================================
+   RESPONSIVE — COMPLET
+   ==================================================== */
+
+/* ── Tablette large (≤1024px) ── */
+@media(max-width:1024px){
+  .setup-nav{padding:0 1.5rem;height:76px;}
+  .setup-logo-img{height:60px;}
+  .setup-hero{padding:2.5rem 2.5rem;gap:1.5rem;}
+  .setup-hero-logo2{width:240px;height:240px;}
+  .setup-hero-title{font-size:2.8rem;}
+  .adm-body{grid-template-columns:1fr 300px;}
+  .q-area{padding:1.5rem 2rem;}
+  .q-card{padding:2rem;}
+  .tgrid{grid-template-columns:repeat(auto-fit,minmax(130px,1fr));}
+}
+
+/* ── Tablette (≤768px) ── */
+@media(max-width:768px){
+  /* Navbar */
+  .setup-nav{padding:0 1rem;height:68px;}
+  .setup-logo-img{height:50px;}
+  .setup-launch-btn{padding:.55rem 1.2rem;font-size:.9rem;}
+
+  /* Hero */
+  .setup-hero{
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:2rem 1.5rem;
+    gap:1.5rem;
+    text-align:center;
+  }
+  .setup-hero-inner{max-width:100%;text-align:center;}
+  .setup-hero-logo2{width:200px;height:200px;order:-1;}
+  .setup-hero-title{font-size:2.4rem;}
+  .setup-hero-sub{font-size:1rem;}
+
+  /* Formulaire */
+  .setup-form-wrap{padding:1.25rem 1rem;}
+  .row{flex-direction:column;}
+  .btn-lg{width:100%;}
+
+  /* Game */
+  .game-header{padding:.75rem 1rem;gap:.5rem;flex-wrap:wrap;}
+  .game-logo{font-size:.85rem;}
+  .q-area{padding:1rem;}
+  .q-card{padding:1.5rem 1rem;border-radius:16px;}
+  .q-text{font-size:clamp(1.1rem,4vw,1.5rem);}
+  .q-controls{padding:1rem;gap:.5rem;}
+  .q-controls .btn{padding:.6rem 1rem;font-size:.82rem;}
+  .sep{display:none;}
+  .tgrid{grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:.5rem;}
+  .teams-zone{padding:.75rem 1rem 1rem;}
+  .tcard{padding:1rem .75rem;}
+  .tcard-score{font-size:1.6rem;}
+
+  /* Timer */
+  .ring-wrap{width:220px;height:220px;}
+  .tmr-num{font-size:5rem;}
+  .tmr-team{font-size:1.6rem;letter-spacing:2px;}
+
+  /* Admin */
+  .adm-body{grid-template-columns:1fr;min-height:unset;}
+  .adm-right{border-right:none;border-top:1px solid rgba(255,255,255,.06);}
+  .adm-left{overflow-y:visible;}
+
+  /* Winner */
+  .w-name{font-size:2.6rem;}
+  .podium{gap:.5rem;}
+  .pod{width:70px;}
+
+  /* Buzzer */
+  .buzzer-teams-list{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
+  .team-buzz-btn{min-height:100px;}
+  .team-buzz-label{font-size:26px;}
+  .team-buzz-name{font-size:17px;}
+  .buzzer-big-btn{width:min(320px,80vw);height:min(320px,80vw);font-size:42px;}
+
+  /* Toast */
+  .toast{right:.75rem;left:.75rem;top:.75rem;}
+
+  /* Fullscreen question */
+  #fscreen{padding:12px 14px 18px;}
+  .fs-bottom{grid-template-columns:1fr;gap:12px;margin-top:30px;}
+  .fs-board-timer{width:200px !important;height:80px !important;font-size:44px !important;}
+  .fs-panel{flex-wrap:wrap;}
+  .fs-tcard{grid-template-columns:56px 1fr 80px;}
+  .fs-tname{font-size:16px !important;}
+  .fs-tscore{font-size:34px !important;}
+}
+
+/* ── Mobile (≤480px) ── */
+@media(max-width:480px){
+  /* Navbar */
+  .setup-nav{padding:0 .75rem;height:60px;}
+  .setup-logo-img{height:42px;}
+  .setup-launch-btn{padding:.5rem 1rem;font-size:.85rem;border-radius:8px;}
+
+  /* Hero */
+  .setup-hero{padding:1.5rem 1rem;gap:1rem;}
+  .setup-hero-logo2{width:150px;height:150px;}
+  .setup-hero-title{font-size:2rem;letter-spacing:-.5px;}
+  .setup-hero-sub{font-size:.95rem;}
+  .setup-hero-icon{width:72px;height:72px;font-size:2.2rem;margin-bottom:1.25rem;}
+
+  /* Formulaire */
+  .setup-form-wrap{padding:1rem .875rem;border-radius:14px;}
+  .inp{font-size:.875rem;padding:.65rem .875rem;}
+  .btn{font-size:.82rem;padding:.6rem 1.1rem;}
+  .btn-lg{font-size:.95rem;padding:.8rem 1.5rem;}
+
+  /* Game */
+  .game-header{padding:.6rem .75rem;}
+  .q-area{padding:.75rem;}
+  .q-card{padding:1.25rem .875rem;}
+  .q-text{font-size:clamp(1rem,5vw,1.3rem);min-height:50px;}
+  .ans-text{font-size:1.2rem;}
+  .q-controls{gap:.375rem;padding:.75rem;}
+  .q-controls .btn{padding:.5rem .75rem;font-size:.78rem;}
+  .tgrid{grid-template-columns:repeat(2,1fr);gap:.4rem;}
+  .tcard-name{font-size:.85rem;}
+  .tcard-score{font-size:1.4rem;}
+  .teams-zone{padding:.5rem .75rem .875rem;}
+
+  /* Timer */
+  .ring-wrap{width:180px;height:180px;}
+  .tmr-num{font-size:4rem;}
+  .tmr-team{font-size:1.2rem;letter-spacing:1px;margin-bottom:1.5rem;}
+  .pts-pick{padding:.6rem 1rem;flex-wrap:wrap;justify-content:center;}
+  .tmr-btns{gap:.5rem;}
+  .tb{min-width:100px;padding:.7rem 1.2rem;font-size:.82rem;}
+
+  /* Admin */
+  .adm-hdr{padding:.75rem 1rem;flex-wrap:wrap;gap:.5rem;}
+  .adm-left,.adm-right{padding:1rem;}
+
+  /* Winner */
+  .w-name{font-size:2rem;}
+  .w-score{font-size:1.1rem;}
+  .trophy{font-size:3.5rem;}
+  .pod{width:55px;}
+  .pod-name{font-size:.65rem;}
+
+  /* Buzzer */
+  .buzzer-card{padding:22px 16px;}
+  .buzzer-team{font-size:28px;}
+  .buzzer-big-btn{font-size:36px;}
+  .buzzer-status{font-size:16px;}
+  .team-buzz-btn{min-height:88px;border-radius:18px;}
+  .team-buzz-label{font-size:22px;}
+  .team-buzz-name{font-size:14px;}
+
+  /* Anim countdown */
+  .big-num{font-size:8rem;}
+  .anim-sub{font-size:.85rem;letter-spacing:2px;}
+}
+
+/* ── Très petit mobile (≤360px) ── */
+@media(max-width:360px){
+  .setup-hero-title{font-size:1.7rem;}
+  .setup-hero-logo2{width:120px;height:120px;}
+  .tgrid{grid-template-columns:1fr 1fr;}
+  .q-text{font-size:1rem;}
+  .adm-body{font-size:.85rem;}
+}
+
 </style>
 <script type="module">
 // Firebase Realtime Database (CDN ESM)
