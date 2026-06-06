@@ -741,6 +741,33 @@ onValue(ref(db, `sessions/${SESSION_ID}/buzzer`), snap => {
   if(typeof renderBuzzerTeamButtons === 'function') renderBuzzerTeamButtons();
 });
 
+// Buzzer sound signal — écran géant joue le son une seule fois
+let _lastBuzzerSoundT = null;
+onValue(ref(db, `sessions/${SESSION_ID}/buzzerSound`), snap => {
+  if(!snap.exists()) return;
+  if(!document.body.classList.contains('tv-display-mode')) return;
+  const data = snap.val();
+  const t = data && data.t;
+  if(t && t !== _lastBuzzerSoundT){
+    _lastBuzzerSoundT = t;
+    if(typeof playBuzzer === 'function'){ try { playBuzzer(); } catch(e){} }
+  }
+});
+
+// Game sound signal (vrai / faux) — écran géant joue le son une seule fois
+let _lastGameSoundT = null;
+onValue(ref(db, `sessions/${SESSION_ID}/gameSound`), snap => {
+  if(!snap.exists()) return;
+  if(!document.body.classList.contains('tv-display-mode')) return;
+  const data = snap.val();
+  const t = data && data.t;
+  if(t && t !== _lastGameSoundT){
+    _lastGameSoundT = t;
+    if(data.snd === 'vrai' && typeof playOk  === 'function'){ try { playOk();  } catch(e){} }
+    if(data.snd === 'faux' && typeof playBad === 'function'){ try { playBad(); } catch(e){} }
+  }
+});
+
 // Display state listener (TV screen / buzzer clients)
 onValue(ref(db, `sessions/${SESSION_ID}/display`), snap => {
   if(!snap.exists()) return;
@@ -1151,19 +1178,34 @@ function beep(f=880,d=.12,v=.25,t='sine',delay=0){
   g.gain.exponentialRampToValueAtTime(.001,T+d);
   o.start(T);o.stop(T+d+.05);
 }
-function playOk(){beep(523,.15,.3,'sine',0);beep(659,.15,.3,'sine',.1);beep(784,.25,.35,'sine',.2);}
-function playBad(){beep(200,.4,.3,'sawtooth');}
-function playTick(v){
-  if(v===0){beep(130,.7,.4,'sawtooth');return;}
-  v<=3?beep(1100,.15,.3):beep(900,.07,.18);
+
+// ─── SONS MP3 ───
+function _playMp3(src){
+  try{const a=new Audio('sounds/'+src);a.volume=1;a.play().catch(()=>{});}catch(e){}
 }
+function playBuzzer(){ _playMp3('buzzeur.mp3'); }
+function playOk()    { _playMp3('vrai.mp3');    }
+function playBad()   { _playMp3('faux.mp3');    }
+
+// ─── SON MINUTEUR EN BOUCLE ───
+let _tickAudio = null;
+function startTickSound(){
+  stopTickSound();
+  try{
+    _tickAudio = new Audio('sounds/time.mp3');
+    _tickAudio.loop = true;
+    _tickAudio.volume = 1;
+    _tickAudio.play().catch(()=>{});
+  }catch(e){ _tickAudio = null; }
+}
+function stopTickSound(){
+  if(_tickAudio){
+    try{ _tickAudio.pause(); _tickAudio.currentTime=0; }catch(e){}
+    _tickAudio = null;
+  }
+}
+function playTick(v){} // plus utilisé tick par tick — le son tourne en boucle
 function playCountBeep(n){n>0?beep(660,.3,.4):beep(900,.5,.5);}
-function playBuzzer(){
-  const c=ga();if(!c)return;
-  beep(220,.18,.45,'square',0);
-  beep(180,.22,.45,'square',.16);
-  beep(140,.35,.5,'sawtooth',.36);
-}
 
 // ─── SCREEN ───
 function go(id){
@@ -1335,20 +1377,34 @@ function startTmr(){
   if(S.trun||S.tv<=0)return;
   S.trun=true;
   document.getElementById('pbtn').textContent='⏸ Pause';
+  startTickSound();
   S.tiv=setInterval(()=>{
-    S.tv--;playTick(S.tv);updateTmrDisplay();
-    if(S.tv<=0){clearInterval(S.tiv);S.tiv=null;S.trun=false;
-      document.getElementById('pbtn').textContent='▶ Reprendre';}
+    S.tv--;updateTmrDisplay();
+    if(S.tv<=0){
+      clearInterval(S.tiv);S.tiv=null;S.trun=false;
+      stopTickSound();
+      playBad();
+      // Notifier l'écran géant : temps écoulé = faux
+      if(window.fbSet&&window.fbRef&&window.fbDb&&window.FIREBASE_SESSION){
+        window.fbSet(window.fbRef(window.fbDb,`sessions/${window.FIREBASE_SESSION}/gameSound`),{snd:'faux',t:Date.now()}).catch(()=>{});
+      }
+      document.getElementById('pbtn').textContent='▶ Reprendre';
+    }
   },1000);
 }
 
 function toggleTmr(){
-  if(S.trun){clearInterval(S.tiv);S.tiv=null;S.trun=false;document.getElementById('pbtn').textContent='▶ Reprendre';}
+  if(S.trun){
+    clearInterval(S.tiv);S.tiv=null;S.trun=false;
+    stopTickSound();
+    document.getElementById('pbtn').textContent='▶ Reprendre';
+  }
   else if(S.tv>0) startTmr();
 }
 
 function resetTmr(){
   clearInterval(S.tiv);S.tiv=null;S.trun=false;S.tv=10;
+  stopTickSound();
   document.getElementById('pbtn').textContent='▶ Démarrer';
   updateTmrDisplay();setTimeout(startTmr,250);
 }
@@ -1369,18 +1425,29 @@ function updateTmrDisplay(){
 
 function correct(){
   clearInterval(S.tiv);S.tiv=null;S.trun=false;
+  stopTickSound();
   const p=S.pts;
   if(S.actTeam>=0){
     S.teams[S.actTeam].score+=p;
     toast(`+${p} point${p>1?'s':''} pour ${S.teams[S.actTeam].name} !`);
   }
   playOk();
+  // Notifier l'écran géant
+  if(window.fbSet&&window.fbRef&&window.fbDb&&window.FIREBASE_SESSION){
+    window.fbSet(window.fbRef(window.fbDb,`sessions/${window.FIREBASE_SESSION}/gameSound`),{snd:'vrai',t:Date.now()}).catch(()=>{});
+  }
   if(S.mode==='reveal')S.showAns=true;
   closeTmr();renderGame();publishDisplayState();
 }
 
 function wrong(){
-  clearInterval(S.tiv);S.tiv=null;S.trun=false;playBad();
+  clearInterval(S.tiv);S.tiv=null;S.trun=false;
+  stopTickSound();
+  playBad();
+  // Notifier l'écran géant
+  if(window.fbSet&&window.fbRef&&window.fbDb&&window.FIREBASE_SESSION){
+    window.fbSet(window.fbRef(window.fbDb,`sessions/${window.FIREBASE_SESSION}/gameSound`),{snd:'faux',t:Date.now()}).catch(()=>{});
+  }
   toast('Mauvaise réponse — Réplique possible');
   const el=document.getElementById('tmr');
   el.style.background='linear-gradient(160deg,rgba(220,38,38,.25) 0%,#030f24 60%)';
@@ -1393,6 +1460,7 @@ function wrong(){
 
 function closeTmr(){
   clearInterval(S.tiv);S.tiv=null;S.trun=false;S.actTeam=-1;
+  stopTickSound();
   document.getElementById('tmr').classList.remove('vis');
   renderTGrid();
 }
@@ -1810,6 +1878,18 @@ function startDisplayMode(){
     qtext.textContent = 'En attente de la prochaine question…';
     qtext.style.opacity = '0.45';
   }
+
+  // Déverrouiller l'AudioContext au premier clic/toucher (obligatoire sur les navigateurs modernes)
+  const unlockAudio = () => {
+    if(typeof ga === 'function') ga();
+    document.removeEventListener('click', unlockAudio);
+    document.removeEventListener('touchstart', unlockAudio);
+    document.removeEventListener('keydown', unlockAudio);
+  };
+  document.addEventListener('click', unlockAudio);
+  document.addEventListener('touchstart', unlockAudio);
+  document.addEventListener('keydown', unlockAudio);
+
   // Firebase onValue listener (défini dans le module) gérera les mises à jour
 }
 
@@ -1985,6 +2065,10 @@ function pressBuzzer(index){
   ga();
   try { if(typeof playBuzzer==='function') playBuzzer(); } catch(e){}
   setBuzzerState({locked:true,index:index,name:t.name||('Équipe '+(index+1)),color:t.color||COLORS[index%COLORS.length],time:Date.now()});
+  // Notifier l'écran géant de jouer le son une seule fois
+  if(window.fbSet&&window.fbRef&&window.fbDb&&window.FIREBASE_SESSION){
+    window.fbSet(window.fbRef(window.fbDb,`sessions/${window.FIREBASE_SESSION}/buzzerSound`),{t:Date.now()}).catch(()=>{});
+  }
   updateBuzzerClientStatus();
   renderBuzzerTeamButtons();
 }
