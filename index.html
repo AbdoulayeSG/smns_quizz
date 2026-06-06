@@ -1906,18 +1906,49 @@ function startDisplayMode(){
     qtext.style.opacity = '0.45';
   }
 
-  // Déverrouiller l'AudioContext au premier clic/toucher (obligatoire sur les navigateurs modernes)
-  const unlockAudio = () => {
-    if(typeof ga === 'function') ga();
-    document.removeEventListener('click', unlockAudio);
-    document.removeEventListener('touchstart', unlockAudio);
-    document.removeEventListener('keydown', unlockAudio);
-  };
-  document.addEventListener('click', unlockAudio);
-  document.addEventListener('touchstart', unlockAudio);
-  document.addEventListener('keydown', unlockAudio);
+  // ── Petite bannière discrète en bas pour activer le son (obligatoire iOS/Android) ──
+  const banner = document.createElement('div');
+  banner.id = 'tv-audio-banner';
+  banner.innerHTML = `
+    <style>
+      #tv-audio-banner {
+        position:fixed;bottom:0;left:0;right:0;z-index:99999;
+        background:rgba(241,90,36,.95);
+        display:flex;align-items:center;justify-content:center;gap:.75rem;
+        padding:.85rem 1.5rem;cursor:pointer;
+        animation:bannerIn .4s cubic-bezier(.175,.885,.32,1.275);
+        box-shadow:0 -4px 20px rgba(0,0,0,.35);
+      }
+      @keyframes bannerIn{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+      #tv-audio-banner span{color:#fff;font-size:1rem;font-weight:700;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+      #tv-audio-banner .ico{font-size:1.4rem;}
+    </style>
+    <div class="ico">🔊</div>
+    <span>Appuyez ici pour autoriser le son</span>
+    <span style="background:rgba(255,255,255,.25);color:#fff;border-radius:8px;padding:.3rem .9rem;font-size:.85rem;font-weight:800;">OK</span>
+  `;
+  document.body.appendChild(banner);
 
-  // Firebase onValue listener (défini dans le module) gérera les mises à jour
+  banner.addEventListener('click', () => {
+    // 1. Déverrouiller WebAudio
+    if(typeof ga === 'function') ga();
+
+    // 2. Pré-jouer chaque MP3 à volume 0 pour débloquer iOS/Android
+    ['buzzeur.mp3','vrai.mp3','faux.mp3','time.mp3'].forEach(src => {
+      try {
+        const a = new Audio('sounds/' + src);
+        a.volume = 0;
+        const p = a.play();
+        if(p && p.then) p.then(()=>{ a.pause(); a.currentTime=0; }).catch(()=>{});
+      } catch(e){}
+    });
+
+    // 3. Faire disparaître la bannière
+    banner.style.transition = 'transform .3s ease, opacity .3s ease';
+    banner.style.transform = 'translateY(100%)';
+    banner.style.opacity = '0';
+    setTimeout(() => banner.remove(), 350);
+  }, { once: true });
 }
 
 
