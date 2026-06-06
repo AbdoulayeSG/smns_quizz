@@ -190,223 +190,58 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;
 .toast{position:fixed;top:1.25rem;right:1.25rem;background:var(--g800);border:1px solid rgba(255,255,255,.1);border-left:3px solid var(--b500);border-radius:var(--r);padding:.65rem 1.1rem;font-size:.875rem;font-weight:600;color:#fff;z-index:5000;animation:tin .3s ease;pointer-events:none;}
 @keyframes tin{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
 
-/* ====== FULLSCREEN QUESTION (GRAND ÉCRAN TV) ====== */
-/* ─── Conteneur principal ─── */
-#fscreen{
-  display:none;
-  position:fixed;
-  inset:0;
-  z-index:2000;
-  overflow:hidden;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  padding:40px 32px 32px;
-  color:#fff;
-  font-family:'Segoe UI',system-ui,sans-serif;
-  background:
-    radial-gradient(ellipse at 50% 0%, rgba(37,99,235,.55) 0%, transparent 60%),
-    radial-gradient(ellipse at 50% 100%, rgba(29,78,216,.3) 0%, transparent 55%),
-    #020b1d;
-}
-#fscreen.vis{display:flex;animation:fsin .4s cubic-bezier(.175,.885,.32,1.275);}
-@keyframes fsin{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
-
-/* Scanlines subtiles */
-#fscreen::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 4px);
-  pointer-events:none;
-  z-index:0;
-}
-/* Cadre TV intérieur */
-#fscreen::after{
-  content:"";
-  position:absolute;
-  inset:12px;
-  border-radius:28px;
-  border:8px solid rgba(15,23,42,.9);
-  box-shadow:
-    0 0 0 1.5px rgba(147,197,253,.22),
-    0 30px 90px rgba(0,0,0,.85),
-    inset 0 0 50px rgba(37,99,235,.08);
-  pointer-events:none;
-  z-index:0;
-}
-
-.fs-panel,.fs-center{position:relative;z-index:2;}
-
-/* ─── Bouton fermer ─── */
-.fs-close{
-  position:absolute;top:1.5rem;right:1.5rem;z-index:20;
-  width:38px;height:38px;border-radius:10px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(255,255,255,.08);
-  color:rgba(255,255,255,.5);cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  font-size:.9rem;transition:all .18s;
-}
-.fs-close:hover{background:rgba(255,255,255,.18);color:#fff;}
+/* ====== FULLSCREEN QUESTION ====== */
+#fscreen{display:none;position:fixed;inset:0;z-index:2000;overflow:hidden;color:#071833;font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(120deg,#f7fbff 0%,#eaf5ff 55%,#dff0ff 100%);padding:20px 38px 28px;flex-direction:column;align-items:center;justify-content:flex-start;}
+#fscreen.vis{display:flex;animation:fsin .25s ease;}
+@keyframes fsin{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}
+#fscreen::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 10%,rgba(255,255,255,.9),transparent 42%);pointer-events:none;}
+#fscreen::after{display:none;}
+.fs-close{position:absolute;right:20px;top:18px;z-index:20;width:36px;height:36px;border-radius:50%;border:1px solid rgba(7,24,51,.15);background:rgba(255,255,255,.55);color:rgba(7,24,51,.45);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;transition:all .18s;}
+.fs-close:hover{background:rgba(255,255,255,.9);color:#071833;}
 .tv-display-mode .fs-close{display:none !important;}
-
-/* ─── Panneaux équipes ─── */
-.fs-panel{
-  width:240px;
-  flex-shrink:0;
-  display:flex;
-  flex-direction:column;
-  gap:.875rem;
-  justify-content:center;
-  padding:1.5rem .875rem;
-  height:calc(100vh - 80px);
-  background:linear-gradient(180deg, rgba(15,23,42,.88), rgba(2,6,23,.94));
-  border:none;
-  box-shadow:none;
-}
-.fs-panel.left{border-right:3px solid rgba(96,165,250,.4);border-radius:20px 0 0 20px;}
-.fs-panel.right{border-left:3px solid rgba(96,165,250,.4);border-radius:0 20px 20px 0;}
-
-.fs-tcard{
-  border-radius:16px;
-  padding:1rem .75rem;
-  text-align:center;
-  border:2px solid rgba(147,197,253,.18);
-  background:linear-gradient(180deg, rgba(30,41,59,.9), rgba(15,23,42,.85));
-  box-shadow:0 8px 22px rgba(0,0,0,.4),inset 0 0 14px rgba(255,255,255,.03);
-  transition:all .3s;
-}
-.fs-tcard.leader{
-  border-color:rgba(96,165,250,.8);
-  background:linear-gradient(180deg, rgba(37,99,235,.28), rgba(15,23,42,.88));
-  box-shadow:0 0 24px rgba(59,130,246,.3),inset 0 0 16px rgba(96,165,250,.1);
-}
-
-.fs-tav{
-  width:44px;height:44px;border-radius:50%;
-  margin:0 auto .6rem;
-  display:flex;align-items:center;justify-content:center;
-  font-size:.9rem;font-weight:800;
-  border:2px solid rgba(255,255,255,.25);
-}
-.fs-tname{font-size:.9rem;font-weight:700;margin-bottom:.4rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase;letter-spacing:.5px;}
-.fs-tscore{font-size:2.8rem;font-weight:900;line-height:1;color:#93c5fd;text-shadow:0 4px 16px rgba(0,0,0,.5);}
-
-/* ─── Centre ─── */
-.fs-center{
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  padding:2rem 3rem;
-  height:calc(100vh - 80px);
-  background:
-    linear-gradient(180deg, rgba(37,99,235,.18), rgba(2,6,23,.22)),
-    radial-gradient(ellipse at center, rgba(59,130,246,.2), transparent 65%);
-  border-left:2px solid rgba(148,163,184,.18);
-  border-right:2px solid rgba(148,163,184,.18);
-  box-shadow:inset 0 0 60px rgba(0,0,0,.3);
-  position:relative;
-}
-
-/* Logo en bas */
-.fs-logo{
-  position:absolute;bottom:1.25rem;left:50%;
-  transform:translateX(-50%);
-  font-size:.72rem;font-weight:700;letter-spacing:3px;
-  color:rgba(147,197,253,.22);text-transform:uppercase;
-}
-
-/* Catégorie badge */
-.fs-cat{
-  font-size:.78rem;font-weight:800;
-  text-transform:uppercase;letter-spacing:2.5px;
-  color:#dbeafe;
-  background:rgba(37,99,235,.55);
-  border:1.5px solid rgba(147,197,253,.35);
-  border-radius:999px;
-  padding:.4rem 1.4rem;
-  margin-bottom:1.5rem;
-  box-shadow:0 8px 22px rgba(0,0,0,.3);
-}
-
-/* Texte question */
-.fs-qtext{
-  font-size:clamp(1.8rem,3.8vw,3.2rem);
-  font-weight:800;
-  line-height:1.3;
-  color:#fff;
-  text-align:center;
-  max-width:860px;
-  padding:1.8rem 2.5rem;
-  border-radius:24px;
-  background:linear-gradient(180deg, rgba(15,23,42,.7), rgba(2,6,23,.55));
-  border:2px solid rgba(147,197,253,.16);
-  box-shadow:inset 0 0 32px rgba(255,255,255,.03),0 20px 48px rgba(0,0,0,.4);
-  text-shadow:0 2px 8px rgba(0,0,0,.4);
-}
-
-/* Points */
-.fs-pts{
-  margin-top:1.5rem;
-  font-size:.9rem;font-weight:800;
-  color:#e0f2fe;
-  background:rgba(30,64,175,.65);
-  border:1.5px solid rgba(147,197,253,.32);
-  border-radius:999px;
-  padding:.4rem 1.3rem;
-  letter-spacing:.5px;
-  box-shadow:0 0 16px rgba(59,130,246,.2);
-}
-
-/* Timer */
-.fs-board-timer{
-  margin-top:2rem;
-  width:150px;height:150px;
-  border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:5rem;font-weight:900;
-  color:#e0f2fe;
-  background:linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.96));
-  border:5px solid rgba(147,197,253,.38);
-  box-shadow:0 18px 45px rgba(0,0,0,.55),inset 0 0 22px rgba(96,165,250,.12);
-  text-shadow:0 4px 14px rgba(0,0,0,.6);
-  letter-spacing:2px;
-}
-
-/* Buzzer overlay */
-.fs-buzzer-overlay{
-  position:absolute;inset:0;z-index:10;pointer-events:none;
-  display:none;align-items:center;justify-content:center;text-align:center;
-  background:color-mix(in srgb,var(--buzz-color,#3b82f6) 28%, transparent);
-  backdrop-filter:saturate(1.1);
-}
+.fs-top{position:relative;z-index:2;height:118px !important;gap:0 !important;display:flex;align-items:center;justify-content:center;width:100%;}
+.fs-head-icon,.fs-brain,.fs-big-mark{display:none !important;}
+.fs-title-block{line-height:.9;text-align:center !important;}
+.fs-title-quiz{font-size:76px !important;font-weight:1000;color:#f15a24;letter-spacing:2px;}
+.fs-title-question{display:inline-block;background:#f15a24;color:white;font-size:30px !important;font-weight:900;padding:10px 28px;margin:8px 0 8px 7px;letter-spacing:2px;}
+.fs-title-day{display:none !important;}
+.fs-question-wrap{position:relative;z-index:2;width:min(1360px,92vw) !important;height:350px !important;display:flex;align-items:center;justify-content:center;text-align:center;border:5px solid #0d4fa6 !important;border-radius:34px !important;background:linear-gradient(135deg,#0b4db3 0%,#1976d2 48%,#58a6ff 100%) !important;padding:42px 70px !important;margin-top:8px !important;box-shadow:0 22px 55px rgba(13,35,72,.22),inset 0 0 45px rgba(255,255,255,.12) !important;}
+.fs-question-wrap::before{display:none !important;}
+.fs-cat{position:absolute;top:-22px !important;left:50% !important;transform:translateX(-50%) !important;background:#f15a24 !important;color:#fff !important;border:none !important;border-radius:8px !important;padding:9px 30px !important;font-size:18px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;box-shadow:none;}
+.fs-qtext{max-width:1080px;color:#fff !important;font-size:clamp(34px,4.2vw,64px) !important;font-weight:900 !important;line-height:1.18 !important;text-shadow:0 3px 12px rgba(0,0,0,.28) !important;background:transparent !important;border:none !important;box-shadow:none !important;padding:0 !important;}
+.fs-pts{position:absolute;right:35px !important;bottom:24px !important;margin:0 !important;background:transparent !important;border:none !important;box-shadow:none !important;color:#fff !important;font-weight:900;font-size:18px;padding:0 !important;}
+.fs-bottom{position:relative;z-index:3;width:100%;max-width:1440px;display:grid;grid-template-columns:1fr 360px 1fr;align-items:center;gap:55px;margin-top:78px;}
+.fs-panel{width:auto !important;height:auto !important;padding:0 !important;display:flex !important;flex-direction:row !important;gap:14px !important;align-items:center !important;justify-content:center !important;background:transparent !important;border:none !important;box-shadow:none !important;}
+.fs-panel.left,.fs-panel.right{border-radius:0;}
+.fs-tcard{width:100%;min-height:92px;border-radius:20px !important;background:white !important;display:grid;grid-template-columns:92px 1fr 120px;align-items:center;gap:18px;padding:10px 18px 10px 10px !important;box-shadow:0 7px 18px rgba(13,35,72,.08) !important;border:4px solid currentColor !important;color:#1657b7;transition:all .3s;}
+.fs-panel.right .fs-tcard{color:#d11d27;}
+.fs-tcard.leader{box-shadow:0 12px 24px rgba(13,35,72,.16) !important;}
+.fs-tav{margin:0 !important;width:70px !important;height:70px !important;border-radius:14px !important;background:currentColor !important;color:white !important;font-size:0 !important;position:relative;border:none !important;}
+.fs-tav::before{content:"👥";font-size:34px;color:white;line-height:1;}
+.fs-tname{color:currentColor !important;text-align:left;font-size:26px !important;font-weight:1000 !important;margin:0 !important;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fs-tscore{color:currentColor !important;font-size:58px !important;font-weight:1000 !important;line-height:1 !important;border-left:3px solid currentColor;padding-left:20px;text-shadow:none !important;text-align:right;}
+.fs-board-timer{justify-self:center;width:340px !important;height:100px !important;border-radius:20px !important;background:#071833 !important;color:white !important;border:6px solid white !important;box-shadow:0 0 0 5px #071833,0 8px 22px rgba(7,24,51,.25) !important;display:flex;align-items:center;justify-content:center;font-size:58px !important;font-weight:1000 !important;margin:0 !important;letter-spacing:3px;}
+.fs-board-timer::before{content:"◷";font-size:46px;margin-right:22px;font-weight:400;}
+.fs-logo{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);font-size:13px;color:rgba(7,24,51,.18) !important;font-weight:900;letter-spacing:3px;}
+.fs-buzzer-overlay{position:absolute;inset:0;z-index:10;pointer-events:none;display:none;align-items:center;justify-content:center;text-align:center;background:color-mix(in srgb,var(--buzz-color,#3b82f6) 28%,transparent);backdrop-filter:saturate(1.1);}
 .fs-buzzer-overlay.show{display:flex;animation:buzzFlash .28s ease;}
 @keyframes buzzFlash{from{opacity:0;transform:scale(1.04)}to{opacity:1;transform:scale(1)}}
-.fs-buzzer-card{
-  min-width:min(680px,80vw);padding:32px 52px;border-radius:30px;
-  background:rgba(255,255,255,.88);border:5px solid var(--buzz-color,#3b82f6);
-  box-shadow:0 28px 80px rgba(0,0,0,.25);
+.fs-buzzer-card{min-width:min(720px,80vw);padding:34px 55px;border-radius:32px;background:rgba(255,255,255,.86);border:6px solid var(--buzz-color,#3b82f6);box-shadow:0 28px 80px rgba(0,0,0,.25);}
+.fs-buzzer-label{font-size:28px;font-weight:1000;color:#071833;text-transform:uppercase;letter-spacing:3px;margin-bottom:8px;}
+.fs-buzzer-team{font-size:64px;font-weight:1000;color:var(--buzz-color,#3b82f6);text-transform:uppercase;line-height:1;}
+@media(max-width:1000px){
+  #fscreen{padding:14px;}
+  .fs-top{height:90px !important;}
+  .fs-title-quiz{font-size:48px !important;}
+  .fs-title-question{font-size:20px !important;}
+  .fs-question-wrap{height:300px !important;padding:28px 35px !important;}
+  .fs-bottom{grid-template-columns:1fr;gap:16px;margin-top:45px;}
+  .fs-board-timer{grid-row:1;width:250px !important;}
+  .fs-panel{width:100% !important;}
+  .fs-tcard{grid-template-columns:70px 1fr 95px;}
+  .fs-tname{font-size:20px !important;}
+  .fs-tscore{font-size:42px !important;}
 }
-.fs-buzzer-label{font-size:26px;font-weight:900;color:#071833;text-transform:uppercase;letter-spacing:3px;margin-bottom:8px;}
-.fs-buzzer-team{font-size:60px;font-weight:900;color:var(--buzz-color,#3b82f6);text-transform:uppercase;line-height:1;}
-
-/* Responsive */
-@media(max-width:900px){
-  #fscreen{padding:20px;}
-  .fs-panel{width:160px;padding:1rem .5rem;height:calc(100vh - 50px);}
-  .fs-center{height:calc(100vh - 50px);padding:1.5rem 1rem;}
-  .fs-tscore{font-size:2rem;}
-  .fs-qtext{font-size:clamp(1.4rem,5vw,2.4rem);padding:1.2rem;}
-  .fs-board-timer{width:110px;height:110px;font-size:3.5rem;}
-}
-
-/* Éléments "QUIZ QUESTION OF THE DAY" inutilisés, cachés */
-.fs-top,.fs-head-icon,.fs-brain,.fs-title-block,.fs-title-quiz,
-.fs-title-question,.fs-title-day,.fs-big-mark,.fs-bottom,
-.fs-question-wrap{display:none !important;}
 
 
 /* ====== BUZZERS : ADMIN + ÉCRAN GÉANT ====== */
@@ -715,7 +550,9 @@ console.log('[Génie en Herbe] Firebase session:', SESSION_ID);
     <button class="btn btn-ghost btn-sm" onclick="navQ(1)">Suivant →</button>
     <div class="sep"></div>
     <button class="btn btn-sm" onclick="openFscreen()"
-      style="background:rgba(59,130,246,.14);color:#93c5fd;border:1px solid rgba(59,130,246,.3);">⛶ Plein écran</button>
+      style="background:rgba(59,130,246,.14);color:#93c5fd;border:1px solid rgba(59,130,246,.3);">⛶ Plein écran local</button>
+    <button class="btn btn-sm" onclick="copyAndOpenTvLink()"
+      style="background:rgba(250,204,21,.14);color:#fcd34d;border:1px solid rgba(250,204,21,.3);">📺 Partager l'écran TV</button>
     <div class="buzzer-link-buttons" data-buzzer-link-buttons></div>
     <button class="btn btn-sm" onclick="resetBuzzer()"
       style="background:rgba(220,38,38,.12);color:#fca5a5;border:1px solid rgba(220,38,38,.25);">Reset buzzer</button>
@@ -1407,9 +1244,22 @@ function toast(msg,dur=2600){
 
 
 function tvLink(){
+  if(window.getSessionLink) return window.getSessionLink('display');
   const u=new URL(window.location.href);
   u.searchParams.set('display','1');
   return u.href;
+}
+
+function copyAndOpenTvLink(){
+  publishDisplayState();
+  const link = tvLink();
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(link)
+      .then(()=>toast('📺 Lien écran TV copié ! Ouvre-le sur ton autre appareil.', 4000))
+      .catch(()=>fallbackCopy(link));
+  } else {
+    fallbackCopy(link);
+  }
 }
 
 function copyTvLink(){
@@ -1455,7 +1305,9 @@ function publishDisplayState(){
 function renderDisplayData(data){
   if(!data)return;
   document.getElementById('fs-cat').textContent=data.cat || 'Génie en Herbe';
-  document.getElementById('fs-qtext').textContent=data.qText || '';
+  const qtext = document.getElementById('fs-qtext');
+  qtext.textContent=data.qText || '';
+  qtext.style.opacity=''; // effacer le style d'attente
   const pts=data.pts || 0;
   document.getElementById('fs-pts').textContent= pts ? `${pts} point${String(pts).includes('-')||(+pts)>1?'s':''}` : '';
   const bt=document.getElementById('fs-board-timer');
@@ -1463,7 +1315,7 @@ function renderDisplayData(data){
   const teams=data.teams || [];
   const half=Math.ceil(teams.length/2);
   const maxScore=Math.max(0,...teams.map(t=>t.score||0));
-  function side(arr,id,right=false){
+  function side(arr,id){
     const el=document.getElementById(id);
     if(!arr.length){el.style.display='none';el.innerHTML='';return;}
     el.style.display='flex';
@@ -1484,10 +1336,18 @@ function startDisplayMode(){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const fs=document.getElementById('fscreen');
   fs.classList.add('vis');
-  // Firebase onValue listener handles real-time updates (see module script)
-  // Fallback: show session info
   const badge = document.getElementById('session-badge');
   if(badge) badge.style.display = 'none';
+
+  // Afficher un message d'attente dans la zone question pendant que Firebase charge
+  const qtext = document.getElementById('fs-qtext');
+  const cat = document.getElementById('fs-cat');
+  if(qtext && !qtext.textContent.trim()){
+    cat.textContent = 'Génie en Herbe';
+    qtext.textContent = 'En attente de la prochaine question…';
+    qtext.style.opacity = '0.45';
+  }
+  // Firebase onValue listener (défini dans le module) gérera les mises à jour
 }
 
 
