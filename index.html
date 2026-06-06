@@ -21,37 +21,162 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;
 .screen.active{display:flex;}
 
 /* ====== SETUP ====== */
-#setup{background:radial-gradient(ellipse at 40% 20%,rgba(37,99,235,.45) 0%,transparent 55%),radial-gradient(ellipse at 80% 80%,rgba(30,58,138,.4) 0%,transparent 50%),#020b1d;align-items:center;justify-content:center;padding:2rem;}
+#setup{
+  background:url('img/back.jpeg') center center / cover no-repeat;
+  align-items:stretch;
+  justify-content:flex-start;
+  padding:0;
+  min-height:100vh;
+}
+
+/* Barre de navigation */
+.setup-nav{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 2.5rem;
+  height:90px;
+  background:transparent;
+  border-bottom:none;
+  flex-shrink:0;
+}
+
+/* Logo image dans la navbar */
+.setup-logo-img{height:80px;width:auto;object-fit:contain;}
+
+.setup-launch-btn{
+  background:#f15a24;
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  padding:.65rem 1.8rem;
+  font-size:1rem;
+  font-weight:700;
+  cursor:pointer;
+  letter-spacing:.3px;
+  font-family:inherit;
+  transition:background .18s, transform .12s, box-shadow .18s;
+  box-shadow:0 4px 16px rgba(0,0,0,.2);
+}
+.setup-launch-btn:hover{background:#f15a24;color:#fff;border-color:#f15a24;box-shadow:0 6px 20px rgba(241,90,36,.5);}
+.setup-launch-btn:active{transform:scale(.97);}
+
+/* Hero */
+.setup-hero{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:transparent;
+  padding:3rem 4rem;
+  position:relative;
+  gap:2rem;
+}
+
+.setup-hero-inner{
+  text-align:center;
+  max-width:560px;
+  position:relative;
+  z-index:1;
+}
+.setup-hero-logo2{
+  width:320px;
+  height:320px;
+  object-fit:contain;
+  position:relative;
+  z-index:1;
+  flex-shrink:0;
+  filter:drop-shadow(0 8px 32px rgba(0,0,0,0.35));
+}
+
+.setup-hero-icon{
+  width:96px;height:96px;border-radius:28px;
+  background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  font-size:3rem;
+  margin:0 auto 2rem;
+  box-shadow:0 12px 36px rgba(241,90,36,.3);
+}
+.setup-hero-title{
+  font-size:3.4rem;
+  font-weight:900;
+  color:#f15a24;
+  letter-spacing:-1px;
+  line-height:1.1;
+  margin-bottom:.75rem;
+  text-shadow:0 2px 12px rgba(0,0,0,0.3);
+  text-align:center;
+}
+.setup-hero-title span{color:#f15a24;text-shadow:0 2px 12px rgba(0,0,0,0.3);}
+.setup-hero-title em{color:#f15a24;font-style:normal;}
+.setup-hero-sub{
+  font-size:1.2rem;
+  color:#1a1a1a;
+  font-weight:600;
+  line-height:1.5;
+  margin-bottom:2.5rem;
+  text-shadow:none;
+  text-align:center;
+}
+
+/* Formulaire équipes (caché au départ) */
+.setup-form-wrap{
+  display:none;
+  background:#fff;
+  border:2px solid #f15a24;
+  border-radius:20px;
+  padding:1.75rem 2rem;
+  text-align:left;
+  box-shadow:0 8px 32px rgba(241,90,36,.12);
+  animation:setupFormIn .3s cubic-bezier(.175,.885,.32,1.275);
+}
+.setup-form-wrap.visible{display:block;}
+@keyframes setupFormIn{
+  from{opacity:0;transform:translateY(14px) scale(.98)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+.setup-form-title{
+  font-size:.72rem;font-weight:800;
+  text-transform:uppercase;letter-spacing:1.5px;
+  color:#f15a24;margin-bottom:1rem;
+}
 .sc{width:100%;max-width:600px;}
-.app-title{text-align:center;margin-bottom:2.5rem;}
-.app-title h1{font-size:3.4rem;font-weight:900;letter-spacing:-2px;background:linear-gradient(135deg,#fff 35%,var(--b300) 65%,var(--b400));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 32px rgba(96,165,250,.25));}
-.app-title p{font-size:1rem;color:var(--b300);margin-top:.5rem;letter-spacing:.5px;}
-.card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--rxl);padding:2rem;box-shadow:0 24px 64px rgba(0,0,0,.45),inset 0 0 1px rgba(255,255,255,.08);backdrop-filter:blur(8px);}
-.lbl{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--b300);margin-bottom:.75rem;}
+.app-title{display:none;}
+.card{
+  background:transparent;border:none;border-radius:0;
+  padding:0;box-shadow:none;backdrop-filter:none;
+}
+.lbl{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#f15a24;margin-bottom:.75rem;}
 .row{display:flex;gap:.75rem;margin-bottom:1rem;}
-.inp{flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:var(--r);padding:.75rem 1rem;font-size:.95rem;color:#fff;outline:none;transition:border-color .2s;font-family:inherit;}
-.inp::placeholder{color:rgba(255,255,255,.35);}
-.inp:focus{border-color:var(--b400);}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;padding:.7rem 1.4rem;border-radius:var(--r);font-size:.9rem;font-weight:600;border:none;cursor:pointer;transition:all .2s;white-space:nowrap;font-family:inherit;}
+.inp{
+  flex:1;background:#f7f7f7;
+  border:1.5px solid #e5e5e5;
+  border-radius:10px;padding:.75rem 1rem;
+  font-size:.95rem;color:#1a1a1a;
+  outline:none;transition:border-color .2s;font-family:inherit;
+}
+.inp::placeholder{color:#bbb;}
+.inp:focus{border-color:#f15a24;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;padding:.7rem 1.4rem;border-radius:10px;font-size:.9rem;font-weight:600;border:none;cursor:pointer;transition:all .2s;white-space:nowrap;font-family:inherit;}
 .btn:active{transform:scale(.97);}
-.btn-primary{background:linear-gradient(135deg,var(--b500),var(--b700));color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.4);}
-.btn-primary:hover{background:linear-gradient(135deg,var(--b600),var(--b800));box-shadow:0 6px 18px rgba(37,99,235,.5);}
-.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
-.btn-ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.18);}
-.btn-ghost:hover{background:rgba(255,255,255,.15);}
-.btn-lg{padding:.9rem 2.5rem;font-size:1.05rem;border-radius:var(--rl);}
+.btn-primary{background:#f15a24;color:#fff;box-shadow:0 4px 14px rgba(241,90,36,.35);}
+.btn-primary:hover{background:#d94e1a;box-shadow:0 6px 18px rgba(241,90,36,.45);}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;}
+.btn-ghost{background:rgba(0,0,0,.06);color:#444;border:1px solid rgba(0,0,0,.12);}
+.btn-ghost:hover{background:rgba(0,0,0,.1);}
+.btn-lg{padding:.9rem 2.5rem;font-size:1.05rem;border-radius:12px;}
 .btn-sm{padding:.45rem 1rem;font-size:.8rem;}
-.btn-danger{background:var(--red);color:#fff;}
-.btn-success{background:var(--green);color:#fff;}
-.teams-list{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.25rem;min-height:56px;}
-.chip{display:flex;align-items:center;justify-content:space-between;background:rgba(59,130,246,.18);border:1px solid rgba(59,130,246,.35);border-radius:var(--r);padding:.7rem 1rem;animation:sli .3s ease;}
+.btn-danger{background:#dc2626;color:#fff;}
+.btn-success{background:#16a34a;color:#fff;}
+.teams-list{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.25rem;min-height:48px;}
+.chip{display:flex;align-items:center;justify-content:space-between;background:rgba(241,90,36,.08);border:1.5px solid rgba(241,90,36,.3);border-radius:10px;padding:.7rem 1rem;animation:sli .3s ease;}
 @keyframes sli{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
 .chip-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-right:.75rem;}
-.chip-name{font-weight:600;font-size:.95rem;}
-.chip-rm{width:28px;height:28px;border-radius:7px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);font-size:.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
-.chip-rm:hover{background:rgba(220,38,38,.3);color:#fff;border-color:var(--red);}
-.start-area{text-align:center;padding-top:1rem;}
-.note{font-size:.82rem;color:var(--b300);margin-bottom:.875rem;}
+.chip-name{font-weight:600;font-size:.95rem;color:#1a1a1a;}
+.chip-rm{width:28px;height:28px;border-radius:7px;border:1px solid rgba(0,0,0,.12);background:rgba(0,0,0,.05);color:#aaa;font-size:.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.chip-rm:hover{background:rgba(220,38,38,.12);color:#dc2626;border-color:#dc2626;}
+.start-area{text-align:center;padding-top:1.25rem;border-top:1.5px solid #f0f0f0;margin-top:.5rem;}
+.note{font-size:.82rem;color:#aaa;margin-bottom:.875rem;}
 
 /* ====== ANIM SCREEN ====== */
 #anim{background:radial-gradient(ellipse at center,rgba(30,64,175,.3) 0%,#020b1d 65%);align-items:center;justify-content:center;position:relative;overflow:hidden;}
@@ -349,6 +474,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;
   to{transform:scale(1.03);}
 }
 
+/* ── Formulaire admin questions ── */
+.qtype-btn{opacity:.45;transition:all .18s;}
+.qtype-btn.active{opacity:1;background:rgba(59,130,246,.22);color:#93c5fd;border-color:rgba(59,130,246,.5);}
+#qform-indice input{
+  width:100%;padding:.5rem .75rem;border-radius:8px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+  color:#fff;font-size:.85rem;outline:none;box-sizing:border-box;
+  transition:border-color .15s;
+}
+#qform-indice input:focus{border-color:rgba(59,130,246,.5);}
+#acat-custom{
+  padding:.5rem .75rem;border-radius:8px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(59,130,246,.4);
+  color:#fff;font-size:.85rem;outline:none;box-sizing:border-box;
+}
 
 </style>
 <script type="module">
@@ -482,27 +622,42 @@ console.log('[Génie en Herbe] Firebase session:', SESSION_ID);
 
 <!-- SETUP -->
 <div id="setup" class="screen active">
-  <div class="sc">
-    <div class="app-title">
-      <h1>Génie en Herbe</h1>
-      <p>Quiz interactif — Créez vos équipes et lancez le jeu</p>
+
+  <!-- Barre de navigation -->
+  <nav class="setup-nav">
+    <img src="img/logo.jpeg" alt="Logo" class="setup-logo-img" />
+    <button class="setup-launch-btn" onclick="showSetupForm()">Lancer</button>
+  </nav>
+
+  <!-- Hero -->
+  <div class="setup-hero">
+    <div class="setup-hero-inner">
+      <div class="setup-hero-icon">🧠</div>
+      <div class="setup-hero-title"><em>Génie en</em> <span>Herbe</span></div>
+      <div class="setup-hero-sub">Quiz interactif — testez vos connaissances<br>en équipe en temps réel.</div>
+
+      <!-- Formulaire (caché au départ) -->
+      <div class="setup-form-wrap" id="setup-form-wrap">
+        <div class="setup-form-title">Créer les équipes</div>
+        <div class="lbl">Ajouter une équipe</div>
+        <div class="row">
+          <input class="inp" id="ti" type="text" placeholder="Nom de l'équipe..." maxlength="24" />
+          <button class="btn btn-primary" onclick="addTeam()">Ajouter</button>
+        </div>
+        <div class="lbl">Équipes inscrites</div>
+        <div class="teams-list" id="tlist">
+          <div style="text-align:center;color:#ccc;padding:1rem;font-size:.85rem;">Aucune équipe</div>
+        </div>
+        <div class="start-area">
+          <p class="note" id="tnote">Minimum 2 équipes requises</p>
+          <button class="btn btn-primary btn-lg" id="sbtn" onclick="startGame()" disabled>Démarrer la partie</button>
+        </div>
+      </div>
+
     </div>
-    <div class="card">
-      <div class="lbl">Ajouter une équipe</div>
-      <div class="row">
-        <input class="inp" id="ti" type="text" placeholder="Nom de l'équipe..." maxlength="24" />
-        <button class="btn btn-primary" onclick="addTeam()">Ajouter</button>
-      </div>
-      <div class="lbl">Équipes inscrites</div>
-      <div class="teams-list" id="tlist">
-        <div style="text-align:center;color:rgba(255,255,255,.25);padding:1rem;font-size:.85rem;">Aucune équipe</div>
-      </div>
-      <div class="start-area">
-        <p class="note" id="tnote">Minimum 2 équipes requises</p>
-        <button class="btn btn-primary btn-lg" id="sbtn" onclick="startGame()" disabled>Démarrer la partie</button>
-      </div>
-    </div>
+    <img src="img/logo2.jpeg" alt="Logo 2" class="setup-hero-logo2" />
   </div>
+
 </div>
 
 <!-- ANIMATION -->
@@ -573,30 +728,90 @@ console.log('[Génie en Herbe] Firebase session:', SESSION_ID);
   </div>
   <div class="adm-body">
     <div class="adm-left">
-      <div class="adm-sec">Banque de questions</div>
+      <div class="adm-sec" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>Banque de questions <span id="qs-badge" style="font-size:.7rem;font-weight:700;color:var(--b300);background:rgba(59,130,246,.15);border-radius:999px;padding:1px 8px;margin-left:.4rem;"></span></span>
+        <div style="display:flex;gap:.4rem;">
+          <button class="btn btn-ghost btn-sm" onclick="exportQs()" title="Exporter JSON">⬇ Export</button>
+          <label class="btn btn-ghost btn-sm" style="cursor:pointer;" title="Importer JSON">⬆ Import<input type="file" accept=".json" style="display:none;" onchange="importQs(event)"></label>
+          <button class="btn btn-ghost btn-sm" onclick="clearAllQs()" style="color:#f87171;" title="Vider la banque">🗑</button>
+        </div>
+      </div>
       <div class="qform">
         <div style="font-size:.72rem;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:1px;margin-bottom:.875rem;">Nouvelle question</div>
+
+        <!-- Type -->
+        <div class="fgrp">
+          <label>Type</label>
+          <div style="display:flex;gap:.5rem;">
+            <button id="qtype-normal" class="btn btn-sm qtype-btn active" onclick="setQType('normal')" style="flex:1;">Standard</button>
+            <button id="qtype-indice" class="btn btn-sm qtype-btn" onclick="setQType('indice')" style="flex:1;">Indice (5 indices)</button>
+          </div>
+        </div>
+
+        <!-- Catégorie -->
         <div class="fgrp">
           <label>Catégorie</label>
-          <select id="acat">
-            <option>Sciences</option><option>Histoire</option><option>Géographie</option>
-            <option>Littérature</option><option>Culture générale</option><option>Sport</option>
-            <option>Arts &amp; Musique</option><option>Mathématiques</option><option>Technologie</option>
-          </select>
+          <div style="display:flex;gap:.4rem;">
+            <select id="acat-sel" onchange="syncCat()" style="flex:1;">
+              <option value="Individuel">Individuel</option>
+              <option value="Collectif">Collectif</option>
+              <option value="Réplique">Réplique</option>
+              <option value="30pts">30 pts</option>
+              <option value="Indice">Indice</option>
+              <option disabled>──────</option>
+              <option value="Sciences">Sciences</option>
+              <option value="Histoire">Histoire</option>
+              <option value="Géographie">Géographie</option>
+              <option value="Littérature">Littérature</option>
+              <option value="Culture générale">Culture générale</option>
+              <option value="Sport">Sport</option>
+              <option value="Arts &amp; Musique">Arts &amp; Musique</option>
+              <option value="Mathématiques">Mathématiques</option>
+              <option value="Technologie">Technologie</option>
+              <option disabled>──────</option>
+              <option value="__custom">+ Autre…</option>
+            </select>
+            <input id="acat-custom" type="text" placeholder="Catégorie libre" style="flex:1;display:none;" oninput="syncCat()" />
+          </div>
+          <input type="hidden" id="acat" />
         </div>
-        <div class="fgrp">
-          <label>Question</label>
-          <textarea id="aq" rows="3" placeholder="Entrez la question ici..."></textarea>
+
+        <!-- Question standard -->
+        <div id="qform-normal">
+          <div class="fgrp">
+            <label>Question</label>
+            <textarea id="aq" rows="3" placeholder="Entrez la question ici..."></textarea>
+          </div>
         </div>
+
+        <!-- Indices (caché par défaut) -->
+        <div id="qform-indice" style="display:none;">
+          <div class="fgrp">
+            <label>Indices <span style="color:var(--g500);font-weight:400;">(du plus large au plus précis)</span></label>
+            <input id="ai1" type="text" placeholder="Indice 1 (50 pts)" style="margin-bottom:.4rem;" />
+            <input id="ai2" type="text" placeholder="Indice 2 (40 pts)" style="margin-bottom:.4rem;" />
+            <input id="ai3" type="text" placeholder="Indice 3 (30 pts)" style="margin-bottom:.4rem;" />
+            <input id="ai4" type="text" placeholder="Indice 4 (20 pts)" style="margin-bottom:.4rem;" />
+            <input id="ai5" type="text" placeholder="Indice 5 (10 pts)" />
+          </div>
+        </div>
+
         <div class="fgrp">
           <label>Réponse</label>
           <input id="aa" type="text" placeholder="Réponse correcte..." />
         </div>
-        <div class="fgrp">
-          <label>Points par défaut</label>
-          <input id="ap" type="number" value="1" min="1" max="10" style="width:80px;" />
+
+        <!-- Points (caché pour Indice, fixé à 50-10) -->
+        <div class="fgrp" id="fgrp-pts">
+          <label>Points</label>
+          <input id="ap" type="number" value="10" min="1" max="50" style="width:80px;" />
         </div>
-        <button class="btn btn-primary" onclick="addQ()" style="width:100%;">+ Ajouter</button>
+
+        <button class="btn btn-primary" onclick="addQ()" style="width:100%;">+ Ajouter la question</button>
+      </div>
+
+      <div id="qlist-empty" style="text-align:center;color:var(--g500);padding:1.5rem;font-size:.85rem;display:none;">
+        Aucune question — utilisez le formulaire ci-dessus ou importez un fichier JSON.
       </div>
       <div class="qlist" id="qlist"></div>
     </div>
@@ -713,157 +928,8 @@ console.log('[Génie en Herbe] Firebase session:', SESSION_ID);
 const COLORS=['#3b82f6','#a855f7','#ec4899','#f59e0b','#10b981','#ef4444','#06b6d4','#84cc16'];
 
 // ─── STATE ───
-// ================= QUESTIONS =================
-
-const questions = [
-
-/* ===== INDIVIDUEL ===== */
-
-{q:"Qui est le fondateur de Microsoft ?", a:"Bill Gates (cofondateur avec Paul Allen)", cat:"Individuel", pts:5},
-
-{q:"Que signifie WWW ?", a:"World Wide Web", cat:"Individuel", pts:5},
-
-{q:"Quel composant est considéré comme le cerveau de l’ordinateur ?", a:"Processeur (CPU)", cat:"Individuel", pts:10},
-
-{q:"Quelle est l’unité de base de l’information en informatique ?", a:"Bit", cat:"Individuel", pts:10},
-
-{q:"Quelle est la différence entre un disque dur (HDD) et un SSD ?", a:"HDD = mécanique (lent) / SSD = électronique (rapide)", cat:"Individuel", pts:10},
-
-{q:"Que signifie URL ?", a:"Uniform Resource Locator", cat:"Individuel", pts:10},
-
-{q:"Quel est le rôle du système d’exploitation ?", a:"Gérer les ressources et permettre l’interaction avec l’utilisateur", cat:"Individuel", pts:15},
-
-{q:"À quoi sert une base de données ?", a:"Stocker et organiser les informations", cat:"Individuel", pts:15},
-
-{q:"Quelle est la différence entre la RAM et la ROM ?", a:"RAM = mémoire temporaire (volatile) / ROM = mémoire permanente (non volatile)", cat:"Individuel", pts:15},
-
-{q:"Quel protocole est utilisé pour sécuriser les sites web ?", a:"HTTPS", cat:"Individuel", pts:15},
-
-{q:"Quelle est la base du système binaire ?", a:"Base 2", cat:"Individuel", pts:15},
-
-{q:"Que signifie l’adresse IP 127.0.0.1 ?", a:"Localhost", cat:"Individuel", pts:15},
-
-{q:"Quel est le rôle d’un compilateur ?", a:"Traduire le code source en code machine", cat:"Individuel", pts:15},
-
-/* ===== COLLECTIF ===== */
-
-{q:"Citez 3 systèmes d’exploitation", a:"Windows, Linux, macOS", cat:"Collectif", pts:20},
-
-{q:"Donnez 4 réseaux sociaux", a:"Facebook, Instagram, TikTok, Twitter (X)", cat:"Collectif", pts:20},
-
-{q:"Citez 3 langages de programmation", a:"C, Python, JavaScript", cat:"Collectif", pts:20},
-
-{q:"Citez 4 composants internes d’un ordinateur", a:"Carte mère, processeur, RAM, disque dur/SSD", cat:"Collectif", pts:25},
-
-{q:"Donnez 4 types d’attaques informatiques", a:"Phishing, malware, ransomware, DDoS", cat:"Collectif", pts:25},
-
-{q:"Citez 3 périphériques d’entrée et 2 de sortie", a:"Entrée : clavier, souris, micro / Sortie : écran, imprimante", cat:"Collectif", pts:25},
-
-{q:"Donnez 3 exemples de logiciels et leur rôle", a:"Word = traitement de texte / Chrome = navigation web / Photoshop = retouche d’image", cat:"Collectif", pts:25},
-
-{q:"Citez 3 langages de programmation et leur domaine", a:"C = système / JavaScript = web / Python = polyvalent", cat:"Collectif", pts:25},
-
-/* ===== REPLIQUE ===== */
-
-{q:"Que signifie RAM ?", a:"Random Access Memory", cat:"Réplique", pts:10},
-
-{q:"Quelle touche permet de supprimer à droite ?", a:"Suppr (Delete)", cat:"Réplique", pts:10},
-
-{q:"Google est-il un navigateur ou un moteur de recherche ?", a:"Moteur de recherche", cat:"Réplique", pts:10},
-
-{q:"HTML est-il un langage de programmation ?", a:"Non", cat:"Réplique", pts:10},
-
-{q:"1 octet = combien de bits ?", a:"8", cat:"Réplique", pts:10},
-
-{q:"Que signifie CPU ?", a:"Central Processing Unit", cat:"Réplique", pts:10},
-
-/* ===== 30 POINTS ===== */
-
-{q:"Pourquoi redémarrer un ordinateur peut résoudre un problème ?", a:"Réinitialise la RAM et ferme les processus bloqués", cat:"30pts", pts:30},
-
-{q:"Quelle est la différence entre logiciel et matériel ?", a:"Logiciel = programmes / Matériel = composants physiques", cat:"30pts", pts:30},
-
-/* ===== INDICES ===== */
-
-{
-cat:"Indice",
-pts:"50-10",
-question:[
-"Je suis utilisé pour structurer des pages web",
-"Je fonctionne avec des balises",
-"Je suis souvent associé au CSS",
-"Je ne suis pas un langage de programmation",
-"Mon nom commence par H"
-],
-a:"HTML"
-},
-
-{
-cat:"Indice",
-pts:"50-10",
-question:[
-"Je suis un appareil",
-"Je permet de connecter un ordinateur à Internet",
-"On me trouve dans les maisons",
-"Je diffuse du Wi-Fi",
-"Mon nom commence par R"
-],
-a:"Routeur"
-},
-
-{
-cat:"Indice",
-pts:"50-10",
-question:[
-"Je suis une unité",
-"Je mesure la vitesse Internet",
-"On m’utilise pour les téléchargements",
-"Je suis souvent en Mbps",
-"Mon nom commence par D"
-],
-a:"Débit"
-},
-
-{
-cat:"Indice",
-pts:"50-10",
-question:[
-"Je suis un logiciel",
-"Je permet de naviguer sur Internet",
-"Je peux ouvrir des sites web",
-"Chrome en est un exemple",
-"Mon nom est navigateur"
-],
-a:"Navigateur web"
-},
-
-{
-cat:"Indice",
-pts:"50-10",
-question:[
-"Je suis un langage de programmation",
-"J’ai été créé dans les années 70",
-"Je suis très utilisé pour les systèmes",
-"Linux est en grande partie écrit avec moi",
-"Mon nom est une seule lettre"
-],
-a:"C"
-},
-
-{
-cat:"Indice",
-pts:"50-10",
-question:[
-"Je suis une entreprise technologique",
-"J’ai été fondée par deux étudiants",
-"Mon nom vient d’un terme mathématique",
-"Je suis le moteur de recherche le plus utilisé",
-"Mon nom commence par G"
-],
-a:"Google"
-}
-
-];
+// Les questions sont chargées/sauvegardées via Firebase
+const questions = [];
 
 
 // ================= STATE =================
@@ -909,6 +975,13 @@ function go(id){
 }
 
 // ─── SETUP ───
+function showSetupForm(){
+  const wrap = document.getElementById('setup-form-wrap');
+  if(wrap){ wrap.classList.add('visible'); }
+  // Focus sur le champ après animation
+  setTimeout(()=>{ const ti=document.getElementById('ti'); if(ti) ti.focus(); }, 320);
+}
+
 function addTeam(){
   const inp=document.getElementById('ti');
   const n=inp.value.trim();
@@ -931,7 +1004,7 @@ function renderSetup(){
   renderBuzzerLinkButtons();
   document.getElementById('sbtn').disabled=!ok;
   document.getElementById('tnote').textContent=ok?`${S.teams.length} équipe${S.teams.length>1?'s':''} prête${S.teams.length>1?'s':''}`:'Minimum 2 équipes requises';
-  if(!S.teams.length){l.innerHTML='<div style="text-align:center;color:rgba(255,255,255,.2);padding:1rem;font-size:.85rem;">Aucune équipe</div>';return;}
+  if(!S.teams.length){l.innerHTML='<div style="text-align:center;color:#ccc;padding:1rem;font-size:.85rem;">Aucune équipe</div>';return;}
   l.innerHTML=S.teams.map((t,i)=>`
     <div class="chip">
       <div style="display:flex;align-items:center;gap:.75rem;">
@@ -1116,23 +1189,153 @@ function closeTmr(){
 function chgPts(d){S.pts=Math.max(1,Math.min(50,S.pts+d));document.getElementById('pval').textContent=S.pts;}
 
 // ─── ADMIN ───
+
+// ── Type de question (standard / indice) ──
+let _qtype = 'normal';
+function setQType(t){
+  _qtype = t;
+  document.getElementById('qtype-normal').classList.toggle('active', t==='normal');
+  document.getElementById('qtype-indice').classList.toggle('active', t==='indice');
+  document.getElementById('qform-normal').style.display = t==='normal' ? '' : 'none';
+  document.getElementById('qform-indice').style.display = t==='indice' ? '' : 'none';
+  document.getElementById('fgrp-pts').style.display = t==='indice' ? 'none' : '';
+  // Auto-sélectionner catégorie "Indice" si on passe en mode indice
+  if(t==='indice'){
+    const sel = document.getElementById('acat-sel');
+    sel.value = 'Indice';
+    syncCat();
+  }
+}
+
+// ── Synchronisation catégorie select ↔ input libre ──
+function syncCat(){
+  const sel = document.getElementById('acat-sel');
+  const custom = document.getElementById('acat-custom');
+  const hidden = document.getElementById('acat');
+  if(!sel||!hidden) return;
+  if(sel.value === '__custom'){
+    custom.style.display = '';
+    hidden.value = custom.value.trim();
+  } else {
+    custom.style.display = 'none';
+    hidden.value = sel.value || 'Divers';
+  }
+}
+
+// Initialiser le formulaire à l'affichage de l'admin
+function initQForm(){
+  _qtype = 'normal';
+  const nb = document.getElementById('qtype-normal');
+  const ib = document.getElementById('qtype-indice');
+  if(nb) nb.classList.add('active');
+  if(ib) ib.classList.remove('active');
+  const fn = document.getElementById('qform-normal');
+  const fi = document.getElementById('qform-indice');
+  const fp = document.getElementById('fgrp-pts');
+  if(fn) fn.style.display = '';
+  if(fi) fi.style.display = 'none';
+  if(fp) fp.style.display = '';
+  // S'assurer que le champ caché acat est synchronisé
+  syncCat();
+}
+
 function addQ(){
-  const q=document.getElementById('aq').value.trim(),
-        a=document.getElementById('aa').value.trim(),
-        cat=document.getElementById('acat').value,
-        pts=parseInt(document.getElementById('ap').value)||1;
-  if(!q||!a){toast('Question et réponse requises');return;}
-  S.qs.push({q,a,cat,pts});
-  document.getElementById('aq').value='';document.getElementById('aa').value='';
-  if(S.curQ<0)S.curQ=0;
-  renderAdmin();toast('Question ajoutée !');
+  const a = document.getElementById('aa').value.trim();
+  const cat = document.getElementById('acat').value.trim() || 'Divers';
+  if(!a){ toast('La réponse est requise'); return; }
+
+  let newQ;
+  if(_qtype === 'indice'){
+    const indices = [1,2,3,4,5].map(n => document.getElementById('ai'+n).value.trim()).filter(Boolean);
+    if(indices.length < 2){ toast('Minimum 2 indices requis'); return; }
+    newQ = { cat, pts:'50-10', question: indices, a };
+    [1,2,3,4,5].forEach(n => { document.getElementById('ai'+n).value=''; });
+  } else {
+    const q = document.getElementById('aq').value.trim();
+    const pts = parseInt(document.getElementById('ap').value)||10;
+    if(!q){ toast('La question est requise'); return; }
+    newQ = { q, a, cat, pts };
+    document.getElementById('aq').value='';
+  }
+
+  document.getElementById('aa').value='';
+  S.qs.push(newQ);
+  if(S.curQ<0) S.curQ=0;
+  saveQsToFirebase();
+  renderAdmin();
+  toast('✅ Question ajoutée !');
 }
 
 function delQ(i){
   if(!confirm('Supprimer cette question ?'))return;
   S.qs.splice(i,1);
-  if(S.curQ>=S.qs.length)S.curQ=S.qs.length-1;
+  if(S.curQ>=S.qs.length) S.curQ=S.qs.length-1;
+  saveQsToFirebase();
   renderAdmin();
+}
+
+// ── Firebase : sauvegarde / chargement des questions ──
+function saveQsToFirebase(){
+  if(!window.fbSet||!window.fbRef||!window.fbDb) return;
+  window.fbSet(window.fbRef(window.fbDb,'genie_questions'), S.qs).catch(()=>{});
+}
+
+function loadQsFromFirebase(){
+  if(!window.fbOnValue||!window.fbRef||!window.fbDb) return;
+  window.fbOnValue(window.fbRef(window.fbDb,'genie_questions'), snap => {
+    if(snap.exists()){
+      const data = snap.val();
+      S.qs = Array.isArray(data) ? data : Object.values(data);
+    } else {
+      S.qs = [];
+    }
+    if(S.curQ<0 && S.qs.length) S.curQ=0;
+    renderAdmin();
+    if(S.curScreen==='game') renderGame();
+    const badge = document.getElementById('qs-badge');
+    if(badge) badge.textContent = S.qs.length + ' question' + (S.qs.length!==1?'s':'');
+  }, { onlyOnce: false });
+}
+
+// ── Export / Import JSON ──
+function exportQs(){
+  const json = JSON.stringify(S.qs, null, 2);
+  const a = document.createElement('a');
+  a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
+  a.download = 'questions-genie.json';
+  a.click();
+}
+
+function importQs(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if(!Array.isArray(data)) throw new Error('Format invalide');
+      const ok = data.filter(q => (q.q||q.question) && q.a);
+      if(!ok.length) throw new Error('Aucune question valide trouvée');
+      if(!confirm(`Importer ${ok.length} question(s) ? Elles s'ajouteront aux existantes.`)) return;
+      S.qs.push(...ok);
+      if(S.curQ<0) S.curQ=0;
+      saveQsToFirebase();
+      renderAdmin();
+      toast(`✅ ${ok.length} question(s) importée(s) !`);
+    } catch(err) {
+      toast('❌ Erreur import : ' + err.message);
+    }
+    event.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+function clearAllQs(){
+  if(!confirm('Supprimer TOUTES les questions de la banque ?')) return;
+  S.qs=[];S.curQ=-1;
+  saveQsToFirebase();
+  renderAdmin();
+  toast('Banque vidée');
 }
 
 function selQ(i){
@@ -1147,13 +1350,25 @@ function setMode(m){
   renderAdmin();renderQ();
 }
 
+let _qsLoaded = false;
 function renderAdmin(){
+  if(!_qsLoaded){ _qsLoaded=true; loadQsFromFirebase(); }
+  initQForm();
   renderQList();renderQPrev();renderScTable();
 }
 
 function renderQList(){
   const el=document.getElementById('qlist');
-  if(!S.qs.length){el.innerHTML='<div style="text-align:center;color:var(--g500);padding:2rem;font-size:.85rem;">Aucune question</div>';return;}
+  const badge=document.getElementById('qs-badge');
+  if(badge) badge.textContent = S.qs.length + ' question' + (S.qs.length!==1?'s':'');
+  if(!S.qs.length){
+    el.innerHTML='';
+    const empty=document.getElementById('qlist-empty');
+    if(empty) empty.style.display='';
+    return;
+  }
+  const empty=document.getElementById('qlist-empty');
+  if(empty) empty.style.display='none';
   el.innerHTML=S.qs.map((q,i)=>{
     const displayQ=Array.isArray(q.question)?q.question[0]+'…':(q.q||q.question||'');
     return `
