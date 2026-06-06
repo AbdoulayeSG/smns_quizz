@@ -1197,7 +1197,8 @@ function openTmr(ti){
   ga();
   S.actTeam=ti;S.tv=10;S.trun=false;
   if(S.tiv)clearInterval(S.tiv);S.tiv=null;
-  S.pts=S.qs[S.curQ]?.pts||1;
+  const rawPts=S.qs[S.curQ]?.pts||1;
+  S.pts=typeof rawPts==='string'&&rawPts.includes('-')?parseInt(rawPts.split('-')[0],10):(parseInt(rawPts,10)||1);
   const t=S.teams[ti];
   document.getElementById('tmrname').textContent=t.name.toUpperCase();
   document.getElementById('pval').textContent=S.pts;
@@ -1275,7 +1276,7 @@ function closeTmr(){
   renderTGrid();
 }
 
-function chgPts(d){S.pts=Math.max(1,Math.min(10,S.pts+d));document.getElementById('pval').textContent=S.pts;}
+function chgPts(d){S.pts=Math.max(1,Math.min(50,S.pts+d));document.getElementById('pval').textContent=S.pts;}
 
 // ─── ADMIN ───
 function addQ(){
@@ -1316,21 +1317,25 @@ function renderAdmin(){
 function renderQList(){
   const el=document.getElementById('qlist');
   if(!S.qs.length){el.innerHTML='<div style="text-align:center;color:var(--g500);padding:2rem;font-size:.85rem;">Aucune question</div>';return;}
-  el.innerHTML=S.qs.map((q,i)=>`
+  el.innerHTML=S.qs.map((q,i)=>{
+    const displayQ=Array.isArray(q.question)?q.question[0]+'…':(q.q||q.question||'');
+    return `
     <div class="qi ${S.curQ===i?'sel':''}" onclick="selQ(${i})">
       <div class="qi-num">Q${i+1}</div>
       <div class="qi-body">
-        <div class="qi-q">${q.q}</div>
+        <div class="qi-q">${displayQ}</div>
         <div class="qi-a">→ ${q.a}</div>
       </div>
       <div class="qi-cat">${q.cat}</div>
       <button class="qi-del" onclick="event.stopPropagation();delQ(${i})">✕</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function renderQPrev(){
   const el=document.getElementById('qprev'),q=S.qs[S.curQ];
-  el.innerHTML=q?`<div class="q-prev-q">${q.q}</div><div class="q-prev-a">→ ${q.a}</div><div style="font-size:.72rem;color:var(--g500);margin-top:.4rem;">${q.cat} — ${q.pts} pt${q.pts>1?'s':''}</div>`:'<div style="color:rgba(255,255,255,.2);font-size:.85rem;">Aucune question sélectionnée</div>';
+  const displayQ = q ? (Array.isArray(q.question)?q.question.join(' → '):(q.q||q.question||'')) : '';
+  el.innerHTML=q?`<div class="q-prev-q">${displayQ}</div><div class="q-prev-a">→ ${q.a}</div><div style="font-size:.72rem;color:var(--g500);margin-top:.4rem;">${q.cat} — ${q.pts} pt${q.pts>1?'s':''}</div>`:'<div style="color:rgba(255,255,255,.2);font-size:.85rem;">Aucune question sélectionnée</div>';
 }
 
 function renderScTable(){
@@ -1440,7 +1445,12 @@ function currentDisplayData(){
   };
 }
 
-function publishDisplayState(){ if(window.fbSet&&window.FIREBASE_SESSION){ window.publishDisplayState(); } }
+function publishDisplayState(){
+  if(window.fbSet && window.fbRef && window.fbDb && window.FIREBASE_SESSION){
+    const data=currentDisplayData();
+    window.fbSet(window.fbRef(window.fbDb,`sessions/${window.FIREBASE_SESSION}/display`),data).catch(()=>{});
+  }
+}
 
 function renderDisplayData(data){
   if(!data)return;
@@ -1664,7 +1674,7 @@ function openFscreen(){
 
   // Texte de la question
   document.getElementById('fs-cat').textContent=q.cat;
-  document.getElementById('fs-qtext').textContent = Array.isArray(q.question) ? q.question.join('  •  ') : (q.q || '');
+  document.getElementById('fs-qtext').textContent = Array.isArray(q.question) ? q.question.join('  •  ') : (q.q || q.question || '');
   const pts=q.pts;
   document.getElementById('fs-pts').textContent=`${pts} point${String(pts).includes('-')||(+pts)>1?'s':''}`;
   const boardTimer=document.getElementById('fs-board-timer');
@@ -1719,8 +1729,6 @@ const __sp=new URLSearchParams(window.location.search);
 if(__sp.get('display')==='1'){startDisplayMode();}
 else if(__sp.get('buzzer')==='1'){startBuzzerMode();}
 else{renderSetup();}
-
-}
 
 </script>
 </body>
