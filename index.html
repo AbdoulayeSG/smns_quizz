@@ -768,6 +768,15 @@ onValue(ref(db, `sessions/${SESSION_ID}/gameSound`), snap => {
   }
 });
 
+// Timer sound signal — écran géant démarre/arrête time.mp3 en boucle
+onValue(ref(db, `sessions/${SESSION_ID}/timerSound`), snap => {
+  if(!document.body.classList.contains('tv-display-mode')) return;
+  if(!snap.exists()){ if(typeof stopTickSound==='function') stopTickSound(); return; }
+  const data = snap.val();
+  if(data.action === 'start' && typeof startTickSound === 'function') startTickSound();
+  if(data.action === 'stop'  && typeof stopTickSound  === 'function') stopTickSound();
+});
+
 // Display state listener (TV screen / buzzer clients)
 onValue(ref(db, `sessions/${SESSION_ID}/display`), snap => {
   if(!snap.exists()) return;
@@ -1181,6 +1190,8 @@ function beep(f=880,d=.12,v=.25,t='sine',delay=0){
 
 // ─── SONS MP3 ───
 function _playMp3(src){
+  // Sons réservés à l'écran TV uniquement
+  if(!document.body.classList.contains('tv-display-mode')) return;
   try{const a=new Audio('sounds/'+src);a.volume=1;a.play().catch(()=>{});}catch(e){}
 }
 function playBuzzer(){ _playMp3('buzzeur.mp3'); }
@@ -1190,6 +1201,8 @@ function playBad()   { _playMp3('faux.mp3');    }
 // ─── SON MINUTEUR EN BOUCLE ───
 let _tickAudio = null;
 function startTickSound(){
+  // Son réservé à l'écran TV uniquement
+  if(!document.body.classList.contains('tv-display-mode')) return;
   stopTickSound();
   try{
     _tickAudio = new Audio('sounds/time.mp3');
@@ -1204,8 +1217,15 @@ function stopTickSound(){
     _tickAudio = null;
   }
 }
-function playTick(v){} // plus utilisé tick par tick — le son tourne en boucle
+function playTick(v){} // le son tourne en boucle via Firebase → TV
 function playCountBeep(n){n>0?beep(660,.3,.4):beep(900,.5,.5);}
+
+// Publier le signal timer vers l'écran TV
+function publishTimerSound(action){
+  if(window.fbSet&&window.fbRef&&window.fbDb&&window.FIREBASE_SESSION){
+    window.fbSet(window.fbRef(window.fbDb,`sessions/${window.FIREBASE_SESSION}/timerSound`),{action}).catch(()=>{});
+  }
+}
 
 // ─── SCREEN ───
 function go(id){
@@ -1378,11 +1398,13 @@ function startTmr(){
   S.trun=true;
   document.getElementById('pbtn').textContent='⏸ Pause';
   startTickSound();
+  publishTimerSound('start');
   S.tiv=setInterval(()=>{
     S.tv--;updateTmrDisplay();
     if(S.tv<=0){
       clearInterval(S.tiv);S.tiv=null;S.trun=false;
       stopTickSound();
+      publishTimerSound('stop');
       playBad();
       // Notifier l'écran géant : temps écoulé = faux
       if(window.fbSet&&window.fbRef&&window.fbDb&&window.FIREBASE_SESSION){
@@ -1397,6 +1419,7 @@ function toggleTmr(){
   if(S.trun){
     clearInterval(S.tiv);S.tiv=null;S.trun=false;
     stopTickSound();
+    publishTimerSound('stop');
     document.getElementById('pbtn').textContent='▶ Reprendre';
   }
   else if(S.tv>0) startTmr();
@@ -1405,6 +1428,7 @@ function toggleTmr(){
 function resetTmr(){
   clearInterval(S.tiv);S.tiv=null;S.trun=false;S.tv=10;
   stopTickSound();
+  publishTimerSound('stop');
   document.getElementById('pbtn').textContent='▶ Démarrer';
   updateTmrDisplay();setTimeout(startTmr,250);
 }
@@ -1426,6 +1450,7 @@ function updateTmrDisplay(){
 function correct(){
   clearInterval(S.tiv);S.tiv=null;S.trun=false;
   stopTickSound();
+  publishTimerSound('stop');
   const p=S.pts;
   if(S.actTeam>=0){
     S.teams[S.actTeam].score+=p;
@@ -1443,6 +1468,7 @@ function correct(){
 function wrong(){
   clearInterval(S.tiv);S.tiv=null;S.trun=false;
   stopTickSound();
+  publishTimerSound('stop');
   playBad();
   // Notifier l'écran géant
   if(window.fbSet&&window.fbRef&&window.fbDb&&window.FIREBASE_SESSION){
@@ -1461,6 +1487,7 @@ function wrong(){
 function closeTmr(){
   clearInterval(S.tiv);S.tiv=null;S.trun=false;S.actTeam=-1;
   stopTickSound();
+  publishTimerSound('stop');
   document.getElementById('tmr').classList.remove('vis');
   renderTGrid();
 }
