@@ -200,10 +200,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;
 .q-cat{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--b400);margin-bottom:.875rem;}
 .q-num{position:absolute;top:1rem;right:1.5rem;font-size:.8rem;color:rgba(255,255,255,.25);font-weight:600;}
 .q-text{font-size:clamp(1.3rem,2.5vw,1.9rem);font-weight:700;line-height:1.35;color:#fff;min-height:70px;display:flex;align-items:center;justify-content:center;}
-.ans-block{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid rgba(255,255,255,.1);animation:fu .35s ease;}
+.ans-block{margin-top:1.5rem;animation:fu .35s ease;}
 @keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.ans-lbl{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--b400);margin-bottom:.4rem;}
-.ans-text{font-size:1.5rem;font-weight:800;color:#4ade80;text-shadow:0 0 20px rgba(74,222,128,.3);}
+.ans-lbl{display:none;}
+.ans-text{font-size:1.6rem;font-weight:900;color:#fff;text-shadow:none;background:#16a34a;border-radius:14px;padding:.75rem 1.5rem;display:inline-block;box-shadow:0 4px 18px rgba(22,163,74,.35);}
 .q-controls{display:flex;align-items:center;justify-content:center;gap:.875rem;padding:1.25rem 2rem;background:rgba(0,0,0,.25);border-top:1px solid rgba(255,255,255,.06);flex-wrap:wrap;}
 .sep{width:1px;height:28px;background:rgba(255,255,255,.1);}
 .teams-zone{padding:1.25rem 2rem 1.5rem;}
@@ -658,6 +658,51 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;
 }
 
 
+/* ====== CARD REVEAL COUNTDOWN ====== */
+.q-card-overlay{
+  position:absolute;inset:0;border-radius:var(--rxl);
+  background:rgba(3,15,36,.92);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:10;backdrop-filter:blur(2px);
+  transition:opacity .4s ease;
+}
+.q-card-overlay.hidden{opacity:0;pointer-events:none;}
+.q-card-countdown{
+  font-size:5rem;font-weight:900;color:#fff;line-height:1;
+  animation:cdPop .5s cubic-bezier(.175,.885,.32,1.275);
+}
+@keyframes cdPop{from{transform:scale(1.8);opacity:0}to{transform:scale(1);opacity:1}}
+.q-card-countdown-lbl{font-size:.85rem;font-weight:700;letter-spacing:3px;color:var(--b300);margin-top:.5rem;text-transform:uppercase;}
+.q-card-countdown-bar{
+  width:180px;height:6px;background:rgba(255,255,255,.12);border-radius:99px;margin-top:1.2rem;overflow:hidden;
+}
+.q-card-countdown-bar-fill{
+  height:100%;background:var(--b400);border-radius:99px;
+  transition:width 1s linear;
+}
+.q-card{position:relative;}
+
+/* ====== DRAG & DROP ADMIN ====== */
+.qi{cursor:grab;}
+.qi.dragging{opacity:.4;cursor:grabbing;}
+.qi.drag-over{border-color:var(--b400);background:rgba(37,99,235,.22);}
+.qcat-group.drag-over-cat{border:2px dashed var(--b500);border-radius:10px;}
+.drag-handle{
+  width:22px;height:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  cursor:grab;flex-shrink:0;opacity:.35;transition:opacity .15s;
+}
+.drag-handle:hover{opacity:.8;}
+.drag-handle span{width:14px;height:2px;background:var(--g400);border-radius:2px;display:block;}
+
+/* category drag */
+.qcat-group{cursor:default;transition:opacity .2s;}
+.qcat-group.cat-dragging{opacity:.35;}
+.qcat-header{cursor:grab;display:flex;align-items:center;justify-content:space-between;gap:.4rem;}
+.cat-drag-handle{display:inline-flex;flex-direction:column;gap:3px;opacity:.4;}
+.cat-drag-handle span{width:12px;height:2px;background:#60a5fa;border-radius:2px;display:block;}
+.cat-drag-drop-zone{height:6px;border-radius:99px;background:transparent;transition:background .15s,height .15s;}
+.cat-drag-drop-zone.active{background:var(--b500);height:10px;}
+
 /* IMAGE QUESTION */
 .q-image{max-width:100%;max-height:50vh;border-radius:14px;margin:1rem auto;display:block;box-shadow:0 8px 32px rgba(0,0,0,.35);}
 #fs-qimage{max-width:78%;max-height:48vh;border-radius:18px;margin:1rem auto;display:block;box-shadow:0 12px 40px rgba(0,0,0,.25);}
@@ -921,11 +966,17 @@ console.log('[Génie en Herbe] Firebase session:', SESSION_ID);
   </div>
   <div class="q-area">
     <div class="q-card" id="qcard">
+      <!-- Overlay compte à rebours (5 sec avant révélation de la carte) -->
+      <div class="q-card-overlay hidden" id="qcard-overlay">
+        <div class="q-card-countdown" id="qcard-cd">5</div>
+        <div class="q-card-countdown-lbl">Révélation dans…</div>
+        <div class="q-card-countdown-bar"><div class="q-card-countdown-bar-fill" id="qcard-cd-bar" style="width:100%"></div></div>
+      </div>
       <div class="q-num" id="qnum"></div>
       <div class="q-cat" id="qcat">Génie en Herbe</div>
       <img id="qimage" class="q-image" style="display:none;" alt="" />
       <div class="q-text" id="qtext"><span style="color:rgba(255,255,255,.18);font-size:1.1rem;">Sélectionnez une question dans le panneau Admin</span></div>
-      <div class="ans-block" id="ansblock" style="display:none;">
+      <div class="ans-block" id="ansblock" style="display:none;text-align:center;">
         <div class="ans-lbl">Réponse</div>
         <div class="ans-text" id="anstext"></div>
       </div>
@@ -1104,6 +1155,20 @@ console.log('[Génie en Herbe] Firebase session:', SESSION_ID);
         <button class="sadj-btn" style="width:32px;height:32px;font-size:1.1rem;" onclick="changeTimerDuration(5)">+</button>
       </div>
       <div style="font-size:.7rem;color:var(--g500);margin-top:.4rem;text-align:center;">Durée par question (5 à 120 sec)</div>
+    </div>
+
+    <!-- Délai révélation carte -->
+    <div style="background:var(--g800);border-radius:var(--rl);padding:1rem 1.25rem;margin-top:.75rem;border:1px solid rgba(255,255,255,.06);">
+      <div class="adm-sec" style="margin-bottom:.6rem;">Délai révélation de la carte</div>
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <button class="sadj-btn" style="width:32px;height:32px;font-size:1.1rem;" onclick="changeRevealDelay(-1)">−</button>
+        <div style="flex:1;text-align:center;">
+          <span id="reveal-delay-val" style="font-size:1.6rem;font-weight:900;color:var(--b300);">5</span>
+          <span style="font-size:.8rem;color:var(--g400);margin-left:4px;">sec</span>
+        </div>
+        <button class="sadj-btn" style="width:32px;height:32px;font-size:1.1rem;" onclick="changeRevealDelay(1)">+</button>
+      </div>
+      <div style="font-size:.7rem;color:var(--g500);margin-top:.4rem;text-align:center;">Secondes avant que la carte apparaisse (0 = instantané)</div>
     </div>
   </div>
 </div>
@@ -1437,6 +1502,7 @@ function navQ(d){
   renderQ();renderQCtr();
   publishDisplayState();
   if(S.curScreen==='admin')renderAdmin();
+  startCardRevealCountdown();
 }
 
 function endGame(){
@@ -1687,7 +1753,6 @@ function addQ(){
   }
 
   S.qs.push(newQ);
-  sortQs();
   if(S.curQ<0) S.curQ=0;
   saveQsToFirebase();
   renderAdmin();
@@ -1771,6 +1836,7 @@ function clearAllQs(){
 function selQ(i){
   S.curQ=i;S.showAns=(S.mode==='answer');
   renderAdmin();renderQ();renderQCtr();
+  if(S.curScreen!=='admin') startCardRevealCountdown();
 }
 
 function setMode(m){
@@ -1785,52 +1851,6 @@ function renderAdmin(){
   if(!_qsLoaded){ _qsLoaded=true; loadQsFromFirebase(); }
   initQForm();
   renderQList();renderQPrev();renderScTable();
-}
-
-function renderQList(){
-  const el=document.getElementById('qlist');
-  const badge=document.getElementById('qs-badge');
-  if(badge) badge.textContent = S.qs.length + ' question' + (S.qs.length!==1?'s':'');
-  if(!S.qs.length){
-    el.innerHTML='';
-    const empty=document.getElementById('qlist-empty');
-    if(empty) empty.style.display='';
-    return;
-  }
-  const empty=document.getElementById('qlist-empty');
-  if(empty) empty.style.display='none';
-  // Grouper par catégorie en conservant l'ordre, numérotation Q0=intro, Q1, Q2…
-  const groups = [];
-  const idx = {};
-  S.qs.forEach((q,i) => {
-    const c=(q&&q.cat)||'Divers';
-    if(idx[c]===undefined){ idx[c]=groups.length; groups.push({cat:c, items:[]}); }
-    groups[idx[c]].items.push({q,i});
-  });
-  el.innerHTML = groups.map(g => {
-    let n = 0;
-    const rows = g.items.map(({q,i}) => {
-      const isIntro = q && q.type==='intro';
-      const label = isIntro ? 'Q0' : ('Q'+(++n));
-      const displayQ = isIntro
-        ? (q.q||'')
-        : (Array.isArray(q.question)?q.question[0]+'…':(q.q||q.question||''));
-      const ansLine = isIntro ? '<div class="qi-a" style="font-style:italic;opacity:.7;">📘 Explication catégorie</div>' : `<div class="qi-a">→ ${q.a}</div>`;
-      return `
-      <div class="qi ${S.curQ===i?'sel':''}" onclick="selQ(${i})">
-        <div class="qi-num">${label}</div>
-        <div class="qi-body">
-          <div class="qi-q">${displayQ}</div>
-          ${ansLine}
-        </div>
-        <button class="qi-del" onclick="event.stopPropagation();delQ(${i})">✕</button>
-      </div>`;
-    }).join('');
-    return `<div class="qcat-group" style="margin:.6rem 0 .9rem;">
-      <div class="qcat-header" style="font-weight:900;font-size:.78rem;letter-spacing:2px;text-transform:uppercase;color:#60a5fa;padding:.3rem .6rem;border-left:3px solid #60a5fa;margin-bottom:.35rem;">${g.cat}</div>
-      ${rows}
-    </div>`;
-  }).join('');
 }
 
 function renderQPrev(){
@@ -2019,8 +2039,230 @@ function publishWinnerToTv(winnerName, winnerScore){
 }
 
 function newGame(){
+  // Nouvelle session Firebase complète
+  if(window.fbRemove && window.fbRef && window.fbDb && window.FIREBASE_SESSION){
+    window.fbRemove(window.fbRef(window.fbDb,`sessions/${window.FIREBASE_SESSION}`)).catch(()=>{});
+  }
+  // Regénérer un nouvel ID de session
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s='GH-';
+  for(let i=0;i<4;i++) s+=chars[Math.floor(Math.random()*chars.length)];
+  window.FIREBASE_SESSION = s;
+  sessionStorage.setItem('genie_session', s);
+  const badge = document.getElementById('session-badge');
+  if(badge) badge.textContent = '🔗 Session : ' + s;
+  // Reset state
   S.teams=[];S.showAns=false;S.actTeam=-1;S.curQ=S.qs.length?0:-1;
   renderSetup();go('setup');
+}
+
+// ─── DÉLAI RÉVÉLATION CARTE ───
+let REVEAL_DELAY = 5; // secondes
+let _revealTimer = null;
+
+function changeRevealDelay(delta){
+  REVEAL_DELAY = Math.min(30, Math.max(0, REVEAL_DELAY + delta));
+  const el = document.getElementById('reveal-delay-val');
+  if(el) el.textContent = REVEAL_DELAY;
+  toast(`🃏 Révélation carte : ${REVEAL_DELAY === 0 ? 'instantané' : REVEAL_DELAY + ' sec'}`);
+}
+
+function startCardRevealCountdown(){
+  // Annuler un éventuel compte à rebours en cours
+  if(_revealTimer){ clearInterval(_revealTimer); _revealTimer=null; }
+  const overlay = document.getElementById('qcard-overlay');
+  const cdEl = document.getElementById('qcard-cd');
+  const barFill = document.getElementById('qcard-cd-bar');
+  if(!overlay) return;
+  if(REVEAL_DELAY <= 0){
+    overlay.classList.add('hidden');
+    return;
+  }
+  // Montrer overlay
+  overlay.classList.remove('hidden');
+  let t = REVEAL_DELAY;
+  cdEl.textContent = t;
+  barFill.style.transition = 'none';
+  barFill.style.width = '100%';
+  // Forcer le reflow pour que la transition redémarre
+  void barFill.offsetWidth;
+  barFill.style.transition = `width ${REVEAL_DELAY}s linear`;
+  barFill.style.width = '0%';
+  _revealTimer = setInterval(()=>{
+    t--;
+    // Animation pop
+    cdEl.style.animation = 'none';
+    void cdEl.offsetWidth;
+    cdEl.style.animation = 'cdPop .5s cubic-bezier(.175,.885,.32,1.275)';
+    if(t > 0){
+      cdEl.textContent = t;
+    } else {
+      clearInterval(_revealTimer); _revealTimer = null;
+      overlay.classList.add('hidden');
+    }
+  }, 1000);
+}
+
+// ─── DRAG & DROP QUESTIONS DANS L'ADMIN ───
+let _dragQIdx = null;
+let _dragCatName = null;
+
+function renderQList(){
+  const el=document.getElementById('qlist');
+  const badge=document.getElementById('qs-badge');
+  if(badge) badge.textContent = S.qs.length + ' question' + (S.qs.length!==1?'s':'');
+  if(!S.qs.length){
+    el.innerHTML='';
+    const empty=document.getElementById('qlist-empty');
+    if(empty) empty.style.display='';
+    return;
+  }
+  const empty=document.getElementById('qlist-empty');
+  if(empty) empty.style.display='none';
+  // Grouper par catégorie en conservant l'ordre d'apparition dans S.qs
+  const groups = [];
+  const idx = {};
+  S.qs.forEach((q,i) => {
+    const c=(q&&q.cat)||'Divers';
+    if(idx[c]===undefined){ idx[c]=groups.length; groups.push({cat:c, items:[]}); }
+    groups[idx[c]].items.push({q,i});
+  });
+
+  el.innerHTML = groups.map((g,gi) => {
+    let n = 0;
+    const rows = g.items.map(({q,i}) => {
+      const isIntro = q && q.type==='intro';
+      const label = isIntro ? 'Q0' : ('Q'+(++n));
+      const displayQ = isIntro
+        ? (q.q||'')
+        : (Array.isArray(q.question)?q.question[0]+'…':(q.q||q.question||''));
+      const ansLine = isIntro ? '<div class="qi-a" style="font-style:italic;opacity:.7;">📘 Explication catégorie</div>' : `<div class="qi-a">→ ${q.a}</div>`;
+      return `
+      <div class="qi ${S.curQ===i?'sel':''}" draggable="true" data-qi="${i}"
+        ondragstart="onQDragStart(event,${i})"
+        ondragover="onQDragOver(event,${i})"
+        ondragleave="onQDragLeave(event)"
+        ondrop="onQDrop(event,${i})"
+        ondragend="onQDragEnd(event)"
+        onclick="selQ(${i})">
+        <div class="drag-handle"><span></span><span></span><span></span></div>
+        <div class="qi-num">${label}</div>
+        <div class="qi-body">
+          <div class="qi-q">${displayQ}</div>
+          ${ansLine}
+        </div>
+        <button class="qi-del" onclick="event.stopPropagation();delQ(${i})">✕</button>
+      </div>`;
+    }).join('');
+    return `<div class="qcat-group" data-cat="${encodeURIComponent(g.cat)}" data-cgi="${gi}"
+      draggable="true"
+      ondragstart="onCatDragStart(event,'${encodeURIComponent(g.cat)}',${gi})"
+      ondragover="onCatDragOver(event,${gi})"
+      ondragleave="onCatDragLeave(event)"
+      ondrop="onCatDrop(event,${gi})"
+      ondragend="onCatDragEnd(event)"
+      style="margin:.6rem 0 .9rem;">
+      <div class="qcat-header" style="font-weight:900;font-size:.78rem;letter-spacing:2px;text-transform:uppercase;color:#60a5fa;padding:.3rem .6rem;border-left:3px solid #60a5fa;margin-bottom:.35rem;">
+        <span class="cat-drag-handle"><span></span><span></span></span>
+        ${g.cat}
+        <span style="font-size:.6rem;color:#475569;font-weight:700;letter-spacing:1px;margin-left:auto;">⠿ glisser</span>
+      </div>
+      ${rows}
+    </div>`;
+  }).join('');
+}
+
+// --- Drag questions ---
+function onQDragStart(e, i){
+  _dragQIdx = i;
+  e.stopPropagation();
+  setTimeout(()=>{
+    const el = document.querySelector(`.qi[data-qi="${i}"]`);
+    if(el) el.classList.add('dragging');
+  },0);
+  e.dataTransfer.effectAllowed='move';
+}
+function onQDragOver(e, i){
+  if(_dragQIdx===null||_dragQIdx===i)return;
+  e.preventDefault();e.stopPropagation();
+  e.dataTransfer.dropEffect='move';
+  document.querySelectorAll('.qi.drag-over').forEach(el=>el.classList.remove('drag-over'));
+  const el=document.querySelector(`.qi[data-qi="${i}"]`);
+  if(el) el.classList.add('drag-over');
+}
+function onQDragLeave(e){ e.stopPropagation(); }
+function onQDrop(e, targetI){
+  if(_dragQIdx===null||_dragQIdx===targetI)return;
+  e.preventDefault();e.stopPropagation();
+  const from=_dragQIdx, to=targetI;
+  const moved=S.qs.splice(from,1)[0];
+  const newTo=to>from?to-1:to;
+  S.qs.splice(newTo,0,moved);
+  _dragQIdx=null;
+  if(S.curQ===from) S.curQ=newTo;
+  else if(S.curQ>from&&S.curQ<=newTo) S.curQ--;
+  else if(S.curQ<from&&S.curQ>=newTo) S.curQ++;
+  saveQsToFirebase();
+  renderAdmin();
+}
+function onQDragEnd(e){
+  _dragQIdx=null;
+  document.querySelectorAll('.qi.dragging,.qi.drag-over').forEach(el=>{el.classList.remove('dragging');el.classList.remove('drag-over');});
+}
+
+// --- Drag catégories ---
+let _dragCatGi = null;
+function onCatDragStart(e, catEnc, gi){
+  _dragCatGi = gi;
+  _dragCatName = catEnc;
+  e.dataTransfer.effectAllowed='move';
+  setTimeout(()=>{
+    const el=document.querySelector(`.qcat-group[data-cgi="${gi}"]`);
+    if(el) el.classList.add('cat-dragging');
+  },0);
+}
+function onCatDragOver(e, gi){
+  if(_dragCatGi===null||_dragCatGi===gi)return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  document.querySelectorAll('.qcat-group.drag-over-cat').forEach(el=>el.classList.remove('drag-over-cat'));
+  const el=document.querySelector(`.qcat-group[data-cgi="${gi}"]`);
+  if(el) el.classList.add('drag-over-cat');
+}
+function onCatDragLeave(e){}
+function onCatDrop(e, targetGi){
+  if(_dragCatGi===null||_dragCatGi===targetGi)return;
+  e.preventDefault();
+  // Récupère les groupes dans l'ordre actuel
+  const groups=[];
+  const idxMap={};
+  S.qs.forEach((q,i)=>{
+    const c=(q&&q.cat)||'Divers';
+    if(idxMap[c]===undefined){idxMap[c]=groups.length;groups.push({cat:c,items:[]});}
+    groups[idxMap[c]].items.push(i);
+  });
+  // Réordonner les groupes
+  const fromG=groups[_dragCatGi];
+  const toG=groups[targetGi];
+  if(!fromG||!toG){_dragCatGi=null;return;}
+  groups.splice(_dragCatGi,1);
+  const newTo=targetGi>_dragCatGi?targetGi-1:targetGi;
+  groups.splice(newTo,0,fromG);
+  // Reconstruire S.qs dans le nouvel ordre
+  const newQs=[];
+  groups.forEach(g=>g.items.forEach(i=>newQs.push(S.qs[i])));
+  const prevCurQ=S.curQ>=0?S.qs[S.curQ]:null;
+  S.qs=newQs;
+  if(prevCurQ) S.curQ=S.qs.indexOf(prevCurQ);
+  _dragCatGi=null;
+  saveQsToFirebase();
+  renderAdmin();
+}
+function onCatDragEnd(e){
+  _dragCatGi=null;
+  document.querySelectorAll('.qcat-group.cat-dragging,.qcat-group.drag-over-cat').forEach(el=>{
+    el.classList.remove('cat-dragging');el.classList.remove('drag-over-cat');
+  });
 }
 
 // ─── TOAST ───
