@@ -741,11 +741,13 @@ onValue(ref(db, `sessions/${SESSION_ID}/buzzer`), snap => {
   if(typeof renderBuzzerTeamButtons === 'function') renderBuzzerTeamButtons();
 });
 
-// Buzzer sound signal — écran géant joue le son une seule fois
+// Buzzer sound signal — le son est émis par les buzzers des équipes, pas par l'écran TV
 let _lastBuzzerSoundT = null;
 onValue(ref(db, `sessions/${SESSION_ID}/buzzerSound`), snap => {
   if(!snap.exists()) return;
-  if(!document.body.classList.contains('tv-display-mode')) return;
+  // Seules les pages buzzer (équipes) jouent le son
+  const bs = document.getElementById('buzzer-screen');
+  if(!bs || !bs.classList.contains('active')) return;
   const data = snap.val();
   const t = data && data.t;
   if(t && t !== _lastBuzzerSoundT){
@@ -977,6 +979,7 @@ console.log('[Génie en Herbe] Firebase session:', SESSION_ID);
             <button id="qtype-normal" class="btn btn-sm qtype-btn active" onclick="setQType('normal')" style="flex:1;">Standard</button>
             <button id="qtype-indice" class="btn btn-sm qtype-btn" onclick="setQType('indice')" style="flex:1;">Indice</button>
             <button id="qtype-image" class="btn btn-sm qtype-btn" onclick="setQType('image')" style="flex:1;">C'est quoi/qui ?</button>
+            <button id="qtype-intro" class="btn btn-sm qtype-btn" onclick="setQType('intro')" style="flex:1;">Explication (Q0)</button>
           </div>
         </div>
 
@@ -1040,7 +1043,15 @@ console.log('[Génie en Herbe] Firebase session:', SESSION_ID);
           </div>
         </div>
 
-        <div class="fgrp">
+        <!-- Explication catégorie (Q0) -->
+        <div id="qform-intro" style="display:none;">
+          <div class="fgrp">
+            <label>Explication de la catégorie <span style="color:var(--g500);font-weight:400;">(s'affiche en Q0 de la catégorie)</span></label>
+            <textarea id="aintro" rows="4" placeholder="Décrivez les règles ou explications de cette catégorie..."></textarea>
+          </div>
+        </div>
+
+        <div class="fgrp" id="fgrp-ans">
           <label>Réponse</label>
           <input id="aa" type="text" placeholder="Réponse correcte..." />
         </div>
@@ -1247,7 +1258,12 @@ function _playMp3(src){
   if(!document.body.classList.contains('tv-display-mode')) return;
   try{const a=new Audio('sounds/'+src);a.volume=1;a.play().catch(()=>{});}catch(e){}
 }
-function playBuzzer(){ _playMp3('buzzeur.mp3'); }
+function playBuzzer(){
+  // Le son du buzzer ne se joue QUE sur les pages buzzer des équipes (pas TV, pas admin)
+  const bs = document.getElementById('buzzer-screen');
+  if(!bs || !bs.classList.contains('active')) return;
+  try{ const a=new Audio('sounds/buzzeur.mp3'); a.volume=1; a.play().catch(()=>{}); }catch(e){}
+}
 function playOk()    { _playMp3('vrai.mp3');    }
 function playBad()   { _playMp3('faux.mp3');    }
 
@@ -1557,11 +1573,17 @@ function setQType(t){
   document.getElementById('qtype-indice').classList.toggle('active', t==='indice');
   const imgBtn=document.getElementById('qtype-image');
   if(imgBtn) imgBtn.classList.toggle('active', t==='image');
+  const introBtn=document.getElementById('qtype-intro');
+  if(introBtn) introBtn.classList.toggle('active', t==='intro');
   document.getElementById('qform-normal').style.display = t==='normal' ? '' : 'none';
   document.getElementById('qform-indice').style.display = t==='indice' ? '' : 'none';
   const imgForm=document.getElementById('qform-image');
   if(imgForm) imgForm.style.display = t==='image' ? '' : 'none';
-  document.getElementById('fgrp-pts').style.display = t==='indice' ? 'none' : '';
+  const introForm=document.getElementById('qform-intro');
+  if(introForm) introForm.style.display = t==='intro' ? '' : 'none';
+  document.getElementById('fgrp-pts').style.display = (t==='indice'||t==='intro') ? 'none' : '';
+  const ansGrp=document.getElementById('fgrp-ans');
+  if(ansGrp) ansGrp.style.display = t==='intro' ? 'none' : '';
   if(t==='indice'){
     const sel = document.getElementById('acat-sel');
     sel.value = 'Indice'; syncCat();
@@ -1616,39 +1638,60 @@ function initQForm(){
   syncCat();
 }
 
+// ── Tri automatique : par catégorie (ordre d'apparition) + Q0 (intro) en premier ──
+function sortQs(){
+  const order = [];
+  S.qs.forEach(q => { const c=(q&&q.cat)||'Divers'; if(!order.includes(c)) order.push(c); });
+  S.qs.sort((a,b) => {
+    const ca=(a&&a.cat)||'Divers', cb=(b&&b.cat)||'Divers';
+    const oa=order.indexOf(ca), ob=order.indexOf(cb);
+    if(oa!==ob) return oa-ob;
+    const ia=a&&a.type==='intro'?0:1, ib=b&&b.type==='intro'?0:1;
+    return ia-ib;
+  });
+}
+
 function addQ(){
-  const a = document.getElementById('aa').value.trim();
   const cat = document.getElementById('acat').value.trim() || 'Divers';
-  if(!a){ toast('La réponse est requise'); return; }
 
   let newQ;
-  if(_qtype === 'indice'){
-    const indices = [1,2,3,4,5].map(n => document.getElementById('ai'+n).value.trim()).filter(Boolean);
-    if(indices.length < 2){ toast('Minimum 2 indices requis'); return; }
-    newQ = { cat, pts:'50-10', question: indices, a };
-    [1,2,3,4,5].forEach(n => { document.getElementById('ai'+n).value=''; });
-  } else if(_qtype === 'image'){
-    const img = document.getElementById('aimg-data').value;
-    const pts = parseInt(document.getElementById('ap').value)||10;
-    if(!img){ toast('Sélectionne une image'); return; }
-    newQ = { type:'image', q:"C'est quoi/qui ?", a, cat, pts, img };
-    document.getElementById('aimg-data').value='';
-    document.getElementById('aimg-file').value='';
-    const pv=document.getElementById('aimg-preview'); pv.style.display='none'; pv.src='';
+  if(_qtype === 'intro'){
+    const txt = document.getElementById('aintro').value.trim();
+    if(!txt){ toast("L'explication est requise"); return; }
+    newQ = { type:'intro', cat, q: txt, a:'', pts:0 };
+    document.getElementById('aintro').value='';
   } else {
-    const q = document.getElementById('aq').value.trim();
-    const pts = parseInt(document.getElementById('ap').value)||10;
-    if(!q){ toast('La question est requise'); return; }
-    newQ = { q, a, cat, pts };
-    document.getElementById('aq').value='';
+    const a = document.getElementById('aa').value.trim();
+    if(!a){ toast('La réponse est requise'); return; }
+    if(_qtype === 'indice'){
+      const indices = [1,2,3,4,5].map(n => document.getElementById('ai'+n).value.trim()).filter(Boolean);
+      if(indices.length < 2){ toast('Minimum 2 indices requis'); return; }
+      newQ = { cat, pts:'50-10', question: indices, a };
+      [1,2,3,4,5].forEach(n => { document.getElementById('ai'+n).value=''; });
+    } else if(_qtype === 'image'){
+      const img = document.getElementById('aimg-data').value;
+      const pts = parseInt(document.getElementById('ap').value)||10;
+      if(!img){ toast('Sélectionne une image'); return; }
+      newQ = { type:'image', q:"C'est quoi/qui ?", a, cat, pts, img };
+      document.getElementById('aimg-data').value='';
+      document.getElementById('aimg-file').value='';
+      const pv=document.getElementById('aimg-preview'); pv.style.display='none'; pv.src='';
+    } else {
+      const q = document.getElementById('aq').value.trim();
+      const pts = parseInt(document.getElementById('ap').value)||10;
+      if(!q){ toast('La question est requise'); return; }
+      newQ = { q, a, cat, pts };
+      document.getElementById('aq').value='';
+    }
+    document.getElementById('aa').value='';
   }
 
-  document.getElementById('aa').value='';
   S.qs.push(newQ);
+  sortQs();
   if(S.curQ<0) S.curQ=0;
   saveQsToFirebase();
   renderAdmin();
-  toast('✅ Question ajoutée !');
+  toast('✅ Ajouté !');
 }
 
 function delQ(i){
@@ -1671,6 +1714,7 @@ function loadQsFromFirebase(){
     if(snap.exists()){
       const data = snap.val();
       S.qs = Array.isArray(data) ? data : Object.values(data);
+      sortQs();
     } else {
       S.qs = [];
     }
@@ -1703,6 +1747,7 @@ function importQs(event){
       if(!ok.length) throw new Error('Aucune question valide trouvée');
       if(!confirm(`Importer ${ok.length} question(s) ? Elles s'ajouteront aux existantes.`)) return;
       S.qs.push(...ok);
+      sortQs();
       if(S.curQ<0) S.curQ=0;
       saveQsToFirebase();
       renderAdmin();
@@ -1754,17 +1799,36 @@ function renderQList(){
   }
   const empty=document.getElementById('qlist-empty');
   if(empty) empty.style.display='none';
-  el.innerHTML=S.qs.map((q,i)=>{
-    const displayQ=Array.isArray(q.question)?q.question[0]+'…':(q.q||q.question||'');
-    return `
-    <div class="qi ${S.curQ===i?'sel':''}" onclick="selQ(${i})">
-      <div class="qi-num">Q${i+1}</div>
-      <div class="qi-body">
-        <div class="qi-q">${displayQ}</div>
-        <div class="qi-a">→ ${q.a}</div>
-      </div>
-      <div class="qi-cat">${q.cat}</div>
-      <button class="qi-del" onclick="event.stopPropagation();delQ(${i})">✕</button>
+  // Grouper par catégorie en conservant l'ordre, numérotation Q0=intro, Q1, Q2…
+  const groups = [];
+  const idx = {};
+  S.qs.forEach((q,i) => {
+    const c=(q&&q.cat)||'Divers';
+    if(idx[c]===undefined){ idx[c]=groups.length; groups.push({cat:c, items:[]}); }
+    groups[idx[c]].items.push({q,i});
+  });
+  el.innerHTML = groups.map(g => {
+    let n = 0;
+    const rows = g.items.map(({q,i}) => {
+      const isIntro = q && q.type==='intro';
+      const label = isIntro ? 'Q0' : ('Q'+(++n));
+      const displayQ = isIntro
+        ? (q.q||'')
+        : (Array.isArray(q.question)?q.question[0]+'…':(q.q||q.question||''));
+      const ansLine = isIntro ? '<div class="qi-a" style="font-style:italic;opacity:.7;">📘 Explication catégorie</div>' : `<div class="qi-a">→ ${q.a}</div>`;
+      return `
+      <div class="qi ${S.curQ===i?'sel':''}" onclick="selQ(${i})">
+        <div class="qi-num">${label}</div>
+        <div class="qi-body">
+          <div class="qi-q">${displayQ}</div>
+          ${ansLine}
+        </div>
+        <button class="qi-del" onclick="event.stopPropagation();delQ(${i})">✕</button>
+      </div>`;
+    }).join('');
+    return `<div class="qcat-group" style="margin:.6rem 0 .9rem;">
+      <div class="qcat-header" style="font-weight:900;font-size:.78rem;letter-spacing:2px;text-transform:uppercase;color:#60a5fa;padding:.3rem .6rem;border-left:3px solid #60a5fa;margin-bottom:.35rem;">${g.cat}</div>
+      ${rows}
     </div>`;
   }).join('');
 }
