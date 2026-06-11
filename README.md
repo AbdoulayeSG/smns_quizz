@@ -139,6 +139,6 @@ La configuration Firebase est embarquée dans `index.html`. Pour utiliser ta pro
 
 <div align="center">
 
-Fait avec ❤️ pour les compétitions de quiz — **Génie en Herbe**
+Fait par Markus</> & Portgas👻 pour les compétitions de quiz — **Génie en Herbe**
 
 </div>
