@@ -777,6 +777,21 @@ onValue(ref(db, `sessions/${SESSION_ID}/timerSound`), snap => {
   if(data.action === 'stop'  && typeof stopTickSound  === 'function') stopTickSound();
 });
 
+// Winner signal — écran géant affiche le vainqueur avec compte à rebours
+let _lastWinnerT = null;
+onValue(ref(db, `sessions/${SESSION_ID}/winner`), snap => {
+  if(!snap.exists()) return;
+  if(!document.body.classList.contains('tv-display-mode')) return;
+  const data = snap.val();
+  const t = data && data.t;
+  if(t && t !== _lastWinnerT){
+    _lastWinnerT = t;
+    if(typeof showTvWinner === 'function'){
+      try { showTvWinner(data.name || '—', data.score || 0); } catch(e){}
+    }
+  }
+});
+
 // Display state listener (TV screen / buzzer clients)
 onValue(ref(db, `sessions/${SESSION_ID}/display`), snap => {
   if(!snap.exists()) return;
@@ -1067,6 +1082,17 @@ console.log('[Génie en Herbe] Firebase session:', SESSION_ID);
       <table class="sc-table" id="sctable"></table>
       <div class="div"></div>
       <button class="btn btn-danger" onclick="resetScores()" style="width:100%;margin-top:.25rem;">Réinitialiser les scores</button>
+      <div class="div"></div>
+      <div class="adm-sec">⏱ Temps de réponse</div>
+      <div style="display:flex;align-items:center;gap:.75rem;background:var(--g700);border-radius:var(--r);padding:.875rem 1rem;border:1px solid rgba(255,255,255,.08);">
+        <button class="sadj-btn" style="width:32px;height:32px;font-size:1.1rem;" onclick="changeTimerDuration(-5)">−</button>
+        <div style="flex:1;text-align:center;">
+          <span id="timer-duration-val" style="font-size:1.6rem;font-weight:900;color:var(--b300);">10</span>
+          <span style="font-size:.8rem;color:var(--g400);margin-left:4px;">sec</span>
+        </div>
+        <button class="sadj-btn" style="width:32px;height:32px;font-size:1.1rem;" onclick="changeTimerDuration(5)">+</button>
+      </div>
+      <div style="font-size:.7rem;color:var(--g500);margin-top:.4rem;text-align:center;">Durée par question (5 à 120 sec)</div>
     </div>
   </div>
 </div>
@@ -1118,6 +1144,23 @@ console.log('[Génie en Herbe] Firebase session:', SESSION_ID);
   <div class="fs-logo">Génie en Herbe</div>
 </div>
 
+<!-- TV WINNER OVERLAY (grand écran seulement) -->
+<div id="tv-winner-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:#ffffff;align-items:center;justify-content:center;flex-direction:column;overflow:hidden;">
+  <canvas id="tv-confetti-canvas" style="position:absolute;inset:0;pointer-events:none;"></canvas>
+  <div id="tv-winner-countdown" style="position:relative;z-index:2;font-size:9rem;font-weight:900;color:#1e293b;text-shadow:0 4px 24px rgba(37,99,235,.25);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;animation:tvCountPop .6s cubic-bezier(.175,.885,.32,1.275);"></div>
+  <div id="tv-winner-card" style="display:none;position:relative;z-index:2;text-align:center;animation:wIn .8s cubic-bezier(.175,.885,.32,1.275) both;">
+    <div style="font-size:8rem;margin-bottom:.75rem;animation:tBounce 2s ease-in-out infinite;">🏆</div>
+    <div style="font-size:1.1rem;font-weight:700;text-transform:uppercase;letter-spacing:5px;color:#2563eb;margin-bottom:.6rem;">Vainqueur</div>
+    <div id="tv-winner-name" style="font-size:5rem;font-weight:900;color:#0f172a;line-height:1.1;margin-bottom:.5rem;letter-spacing:-1px;"></div>
+    <div id="tv-winner-score" style="font-size:1.8rem;font-weight:700;color:#2563eb;"></div>
+  </div>
+</div>
+
+<style>
+@keyframes tvCountPop{from{transform:scale(2.5);opacity:0}to{transform:scale(1);opacity:1}}
+#tv-winner-overlay.active{display:flex!important;}
+</style>
+
 <!-- BUZZER SCREEN -->
 <div id="buzzer-screen">
   <div class="buzzer-card buzzer-card-dynamic">
@@ -1156,6 +1199,16 @@ console.log('[Génie en Herbe] Firebase session:', SESSION_ID);
 <script>
 // ─── PALETTE ───
 const COLORS=['#3b82f6','#a855f7','#ec4899','#f59e0b','#10b981','#ef4444','#06b6d4','#84cc16'];
+
+// ─── DURÉE DU MINUTEUR (modifiable depuis l'admin) ───
+let TIMER_DURATION = 10;
+
+function changeTimerDuration(delta){
+  TIMER_DURATION = Math.min(120, Math.max(5, TIMER_DURATION + delta));
+  const el = document.getElementById('timer-duration-val');
+  if(el) el.textContent = TIMER_DURATION;
+  toast(`⏱ Temps de réponse : ${TIMER_DURATION} sec`);
+}
 
 // ─── STATE ───
 // Les questions sont chargées/sauvegardées via Firebase
@@ -1378,7 +1431,7 @@ function endGame(){
 // ─── TIMER ───
 function openTmr(ti){
   ga();
-  S.actTeam=ti;S.tv=10;S.trun=false;
+  S.actTeam=ti;S.tv=TIMER_DURATION;S.trun=false;
   if(S.tiv)clearInterval(S.tiv);S.tiv=null;
   const rawPts=S.qs[S.curQ]?.pts||1;
   S.pts=typeof rawPts==='string'&&rawPts.includes('-')?parseInt(rawPts.split('-')[0],10):(parseInt(rawPts,10)||1);
@@ -1426,7 +1479,7 @@ function toggleTmr(){
 }
 
 function resetTmr(){
-  clearInterval(S.tiv);S.tiv=null;S.trun=false;S.tv=10;
+  clearInterval(S.tiv);S.tiv=null;S.trun=false;S.tv=TIMER_DURATION;
   stopTickSound();
   publishTimerSound('stop');
   document.getElementById('pbtn').textContent='▶ Démarrer';
@@ -1443,7 +1496,7 @@ function updateTmrDisplay(){
   publishDisplayState();
   const clr=S.tv<=3?'#f87171':S.tv<=5?'#fbbf24':'#60a5fa';
   rp.style.stroke=clr;
-  const off=CIRC*(1-S.tv/10);
+  const off=CIRC*(1-S.tv/TIMER_DURATION);
   rp.style.strokeDasharray=CIRC;rp.style.strokeDashoffset=off;
 }
 
@@ -1763,7 +1816,10 @@ function showWinner(){
       <div class="pod-blk">${nums[i]}</div>
     </div>`:`<div class="pod ${cls[i]}"></div>`).join('');
   go('winner');makeConfetti();
-  playOk();setTimeout(()=>{beep(523,.3,.4);beep(659,.3,.4,'sine',.15);beep(784,.5,.5,'sine',.3);},600);
+  // Publier vers l'écran TV
+  publishWinnerToTv(w.name, w.score);
+  // Pas de son côté admin — les sons sont réservés à l'écran TV
+
 }
 
 function makeConfetti(){
@@ -1773,6 +1829,128 @@ function makeConfetti(){
     const p=document.createElement('div');p.className='cf';
     p.style.cssText=`left:${Math.random()*100}%;background:${cls[i%cls.length]};width:${5+Math.random()*9}px;height:${9+Math.random()*13}px;border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${3+Math.random()*4}s;animation-delay:${Math.random()*3}s;`;
     c.appendChild(p);
+  }
+}
+
+// ─── SON WIN (grand écran TV) ───
+let _winAudio = null;
+function startWinSound(){
+  if(!document.body.classList.contains('tv-display-mode')) return;
+  stopWinSound();
+  try{
+    _winAudio = new Audio('sounds/win.mp3');
+    _winAudio.loop = false;
+    _winAudio.volume = 1;
+    _winAudio.play().catch(()=>{});
+  }catch(e){ _winAudio = null; }
+}
+function stopWinSound(){
+  if(_winAudio){
+    try{ _winAudio.pause(); _winAudio.currentTime=0; }catch(e){}
+    _winAudio = null;
+  }
+}
+
+// ─── CONFETTIS CANVAS (grand écran) ───
+let _confettiAnim = null;
+function launchTvConfetti(){
+  const canvas = document.getElementById('tv-confetti-canvas');
+  if(!canvas) return;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  const pieces = [];
+  const colors = ['#3b82f6','#60a5fa','#fbbf24','#f15a24','#a855f7','#10b981','#fff','#ec4899','#34d399','#fde68a'];
+  for(let i=0;i<200;i++){
+    pieces.push({
+      x: Math.random()*canvas.width,
+      y: -20 - Math.random()*canvas.height*0.5,
+      w: 6+Math.random()*12,
+      h: 10+Math.random()*16,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      rot: Math.random()*360,
+      rotSpeed: (Math.random()-0.5)*8,
+      vy: 2+Math.random()*4,
+      vx: (Math.random()-0.5)*3,
+      isCircle: Math.random()>0.6
+    });
+  }
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pieces.forEach(p=>{
+      ctx.save();
+      ctx.translate(p.x+p.w/2, p.y+p.h/2);
+      ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle = p.color;
+      if(p.isCircle){
+        ctx.beginPath();ctx.arc(0,0,p.w/2,0,Math.PI*2);ctx.fill();
+      } else {
+        ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      }
+      ctx.restore();
+      p.y += p.vy; p.x += p.vx; p.rot += p.rotSpeed;
+      if(p.y > canvas.height){ p.y=-20; p.x=Math.random()*canvas.width; }
+    });
+    _confettiAnim = requestAnimationFrame(draw);
+  }
+  draw();
+}
+function stopTvConfetti(){
+  if(_confettiAnim){ cancelAnimationFrame(_confettiAnim); _confettiAnim=null; }
+  const canvas = document.getElementById('tv-confetti-canvas');
+  if(canvas){ const ctx=canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); }
+}
+
+// ─── AFFICHAGE GAGNANT SUR GRAND ÉCRAN ───
+function showTvWinner(winnerName, winnerScore){
+  const overlay = document.getElementById('tv-winner-overlay');
+  const countdownEl = document.getElementById('tv-winner-countdown');
+  const card = document.getElementById('tv-winner-card');
+  const nameEl = document.getElementById('tv-winner-name');
+  const scoreEl = document.getElementById('tv-winner-score');
+  if(!overlay) return;
+
+  // Remplir les données
+  nameEl.textContent = winnerName;
+  scoreEl.textContent = winnerScore + ' point' + (winnerScore !== 1 ? 's' : '');
+
+  // Afficher l'overlay
+  overlay.style.display = 'flex';
+  card.style.display = 'none';
+  countdownEl.style.display = 'block';
+
+  // Démarrer le son win.mp3 immédiatement
+  startWinSound();
+
+  // Compte à rebours 5 → 1
+  let count = 6;
+  function tick(){
+    countdownEl.textContent = count;
+    countdownEl.style.animation = 'none';
+    void countdownEl.offsetWidth;
+    countdownEl.style.animation = 'tvCountPop .6s cubic-bezier(.175,.885,.32,1.275)';
+    beep(count===1?880:660, .25, .4);
+    if(count > 1){
+      count--;
+      setTimeout(tick, 1000);
+    } else {
+      // Fin du compte à rebours → afficher la carte gagnante + confettis
+      setTimeout(()=>{
+        countdownEl.style.display = 'none';
+        card.style.display = 'block';
+        launchTvConfetti();
+      }, 800);
+    }
+  }
+  tick();
+}
+
+// Publier signal winner vers écran TV via Firebase
+function publishWinnerToTv(winnerName, winnerScore){
+  if(window.fbSet&&window.fbRef&&window.fbDb&&window.FIREBASE_SESSION){
+    window.fbSet(window.fbRef(window.fbDb,`sessions/${window.FIREBASE_SESSION}/winner`),{
+      name: winnerName, score: winnerScore, t: Date.now()
+    }).catch(()=>{});
   }
 }
 
@@ -1934,7 +2112,7 @@ function startDisplayMode(){
     if(typeof ga === 'function') ga();
 
     // 2. Pré-jouer chaque MP3 à volume 0 pour débloquer iOS/Android
-    ['buzzeur.mp3','vrai.mp3','faux.mp3','time.mp3'].forEach(src => {
+    ['buzzeur.mp3','vrai.mp3','faux.mp3','time.mp3','win.mp3'].forEach(src => {
       try {
         const a = new Audio('sounds/' + src);
         a.volume = 0;
