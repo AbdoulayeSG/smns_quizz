@@ -658,57 +658,94 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;
 }
 
 
-/* ====== GRAND ÉCRAN : RÉPONSE VERTE ====== */
+/* ====== GRAND ÉCRAN : RÉPONSE VERTE (rectangle = même taille que le bleu) ====== */
+/* Quand la réponse est révélée, .fs-question-wrap passe en vert via la classe .ans-revealed */
+.fs-question-wrap.ans-revealed{
+  background:linear-gradient(135deg,#15803d 0%,#16a34a 48%,#4ade80 100%) !important;
+  border-color:#15803d !important;
+  transition:background .4s ease, border-color .4s ease;
+}
+/* Le texte de la réponse remplace le texte de la question (même style) */
+#fs-ansblock{ display:none; }
+#fs-ansblock.visible{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+}
 .fs-ans-text{
-  display:inline-block;
-  background:#16a34a;
-  color:#fff;
-  font-size:clamp(28px,3.5vw,56px);
-  font-weight:1000;
-  border-radius:18px;
-  padding:.6rem 2.2rem;
-  box-shadow:0 8px 32px rgba(22,163,74,.45);
-  animation:fu .35s ease;
-  letter-spacing:.5px;
+  color:#fff !important;
+  font-size:clamp(34px,4.2vw,64px) !important;
+  font-weight:1000 !important;
+  line-height:1.18 !important;
+  text-shadow:0 3px 12px rgba(0,0,0,.28) !important;
+  text-align:center;
+  max-width:1080px;
 }
 
-/* ====== GRAND ÉCRAN : OVERLAY COMPTE À REBOURS ====== */
+/* ====== GRAND ÉCRAN : OVERLAY COMPTE À REBOURS PLEIN ÉCRAN ====== */
 .fs-cd-overlay{
-  position:absolute;inset:0;z-index:50;
+  position:fixed;inset:0;z-index:3000;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:rgba(3,10,28,.88);
-  backdrop-filter:blur(4px);
-  border-radius:inherit;
-  transition:opacity .4s ease;
+  background:#fff;
+  transition:opacity .35s ease;
 }
 .fs-cd-overlay.hidden{opacity:0;pointer-events:none;}
-.fs-cd-num{
-  font-size:clamp(80px,15vw,160px);
-  font-weight:1000;
-  color:#fff;
-  line-height:1;
-  animation:cdPop .5s cubic-bezier(.175,.885,.32,1.275);
+/* Flou sur le contenu derrière (fscreen) pendant le countdown */
+#fscreen.counting .fs-question-wrap,
+#fscreen.counting .fs-top,
+#fscreen.counting .fs-bottom{
+  filter:blur(18px);
+  opacity:.18;
+  transition:filter .3s, opacity .3s;
 }
-@keyframes cdPop{from{transform:scale(2);opacity:0}to{transform:scale(1);opacity:1}}
+#fscreen:not(.counting) .fs-question-wrap,
+#fscreen:not(.counting) .fs-top,
+#fscreen:not(.counting) .fs-bottom{
+  filter:none;
+  opacity:1;
+  transition:filter .4s, opacity .4s;
+}
+.fs-cd-num{
+  font-size:clamp(120px,22vw,240px);
+  font-weight:1000;
+  color:#0f172a;
+  line-height:1;
+  animation:cdPop .45s cubic-bezier(.175,.885,.32,1.275);
+}
+@keyframes cdPop{from{transform:scale(2.2);opacity:0}to{transform:scale(1);opacity:1}}
 .fs-cd-lbl{
-  font-size:clamp(14px,1.8vw,22px);
+  font-size:clamp(16px,2vw,26px);
   font-weight:800;
-  letter-spacing:4px;
-  color:#93c5fd;
-  margin-top:.6rem;
+  letter-spacing:5px;
+  color:#64748b;
+  margin-top:.5rem;
   text-transform:uppercase;
 }
 .fs-cd-bar{
-  width:min(340px,60vw);height:8px;
-  background:rgba(255,255,255,.12);
-  border-radius:99px;margin-top:1.4rem;overflow:hidden;
+  width:min(400px,65vw);height:10px;
+  background:#e2e8f0;
+  border-radius:99px;margin-top:1.6rem;overflow:hidden;
 }
 .fs-cd-bar-fill{
-  height:100%;background:#3b82f6;border-radius:99px;
+  height:100%;background:#0b4db3;border-radius:99px;
   transition:width 1s linear;
 }
+/* Scores affichés en bas de l'overlay countdown */
+.fs-cd-scores{
+  position:absolute;bottom:40px;left:0;right:0;
+  display:flex;align-items:center;justify-content:center;
+  gap:20px;flex-wrap:wrap;padding:0 40px;
+}
+.fs-cd-score-chip{
+  display:flex;align-items:center;gap:10px;
+  background:#f1f5f9;border-radius:16px;padding:10px 22px;
+  border:3px solid currentColor;
+}
+.fs-cd-score-name{font-size:clamp(14px,1.6vw,20px);font-weight:900;text-transform:uppercase;color:inherit;}
+.fs-cd-score-val{font-size:clamp(20px,2.5vw,32px);font-weight:1000;color:inherit;}
 
-/* ====== CARD REVEAL (admin — styles nettoyés, non utilisés) ====== */
+/* ====== CARD REVEAL (admin — non utilisé) ====== */
 .q-card{position:relative;}
 
 /* IMAGE QUESTION */
@@ -1224,23 +1261,26 @@ console.log('[Génie en Herbe] Firebase session:', SESSION_ID);
     </div>
   </div>
 
-  <div class="fs-question-wrap">
+  <div class="fs-question-wrap" id="fs-question-wrap">
     <div class="fs-big-mark">?</div>
     <div class="fs-cat" id="fs-cat">Génie en Herbe</div>
     <img id="fs-qimage" alt="" style="display:none;" />
+    <!-- Question (masquée quand réponse affichée) -->
     <div class="fs-qtext" id="fs-qtext"></div>
-    <div class="fs-pts" id="fs-pts"></div>
-    <!-- Réponse grand écran : rectangle vert -->
-    <div id="fs-ansblock" style="display:none;margin-top:1.2rem;">
+    <!-- Réponse : même rectangle, même taille, vert -->
+    <div id="fs-ansblock">
       <div class="fs-ans-text" id="fs-anstext"></div>
     </div>
+    <div class="fs-pts" id="fs-pts"></div>
   </div>
 
-  <!-- Overlay compte à rebours grand écran -->
+  <!-- Overlay countdown : plein écran blanc, flou derrière -->
   <div class="fs-cd-overlay hidden" id="fs-cd-overlay">
     <div class="fs-cd-num" id="fs-cd-num">5</div>
     <div class="fs-cd-lbl">Révélation dans…</div>
     <div class="fs-cd-bar"><div class="fs-cd-bar-fill" id="fs-cd-bar-fill" style="width:100%"></div></div>
+    <!-- Scores des équipes affichés en bas -->
+    <div class="fs-cd-scores" id="fs-cd-scores"></div>
   </div>
 
   <div class="fs-bottom">
@@ -2336,14 +2376,41 @@ function publishDisplayState(){
 let _lastDisplayQText = null;
 let _fsCdTimer = null;
 
-function startFsCountdown(){
+function renderFsCdScores(teams){
+  const el = document.getElementById('fs-cd-scores');
+  if(!el || !teams || !teams.length){ if(el) el.innerHTML=''; return; }
+  const maxScore = Math.max(0,...teams.map(t=>t.score||0));
+  el.innerHTML = teams.map((t,i)=>{
+    const color = t.color || '#3b82f6';
+    return `<div class="fs-cd-score-chip" style="color:${color};border-color:${color};">
+      <span class="fs-cd-score-name">${t.name||'Équipe'}</span>
+      <span class="fs-cd-score-val">${t.score||0}</span>
+    </div>`;
+  }).join('');
+}
+
+function startFsCountdown(teams){
   if(_fsCdTimer){ clearInterval(_fsCdTimer); _fsCdTimer=null; }
-  const overlay = document.getElementById('fs-cd-overlay');
-  const cdEl    = document.getElementById('fs-cd-num');
-  const barFill = document.getElementById('fs-cd-bar-fill');
+  const overlay  = document.getElementById('fs-cd-overlay');
+  const cdEl     = document.getElementById('fs-cd-num');
+  const barFill  = document.getElementById('fs-cd-bar-fill');
+  const fscreen  = document.getElementById('fscreen');
   if(!overlay) return;
-  if(REVEAL_DELAY <= 0){ overlay.classList.add('hidden'); return; }
+
+  renderFsCdScores(teams);
+
+  if(REVEAL_DELAY <= 0){
+    overlay.classList.add('hidden');
+    if(fscreen) fscreen.classList.remove('counting');
+    return;
+  }
+
   overlay.classList.remove('hidden');
+  if(fscreen) fscreen.classList.add('counting');
+
+  // Son time.mp3 pendant le décompte
+  if(typeof startTickSound === 'function') startTickSound();
+
   let t = REVEAL_DELAY;
   cdEl.textContent = t;
   barFill.style.transition = 'none';
@@ -2351,15 +2418,18 @@ function startFsCountdown(){
   void barFill.offsetWidth;
   barFill.style.transition = `width ${REVEAL_DELAY}s linear`;
   barFill.style.width = '0%';
+
   _fsCdTimer = setInterval(()=>{
     t--;
     cdEl.style.animation = 'none';
     void cdEl.offsetWidth;
-    cdEl.style.animation = 'cdPop .5s cubic-bezier(.175,.885,.32,1.275)';
+    cdEl.style.animation = 'cdPop .45s cubic-bezier(.175,.885,.32,1.275)';
     if(t > 0){ cdEl.textContent = t; }
     else {
       clearInterval(_fsCdTimer); _fsCdTimer = null;
+      if(typeof stopTickSound === 'function') stopTickSound();
       overlay.classList.add('hidden');
+      if(fscreen) fscreen.classList.remove('counting');
     }
   }, 1000);
 }
@@ -2367,40 +2437,38 @@ function startFsCountdown(){
 function renderDisplayData(data){
   if(!data)return;
   document.getElementById('fs-cat').textContent=data.cat || 'Génie en Herbe';
-  const qtext = document.getElementById('fs-qtext');
-  const qimg = document.getElementById('fs-qimage');
+  const qtext  = document.getElementById('fs-qtext');
+  const qimg   = document.getElementById('fs-qimage');
+  const wrap   = document.getElementById('fs-question-wrap');
+  const ansBlk = document.getElementById('fs-ansblock');
+  const ansTxt = document.getElementById('fs-anstext');
+
   if(qimg){
     if(data.img){ qimg.src=data.img; qimg.style.display='block'; }
     else { qimg.style.display='none'; qimg.src=''; }
   }
+
   const txt = data.qText || '';
-  qtext.textContent = txt;
+
+  if(data.showAns && data.answer){
+    // Rectangle VERT — cacher question, montrer réponse
+    if(qtext)  qtext.style.display = 'none';
+    if(ansTxt) ansTxt.textContent = data.answer;
+    if(ansBlk) ansBlk.classList.add('visible');
+    if(wrap)   wrap.classList.add('ans-revealed');
+  } else {
+    // Rectangle BLEU — montrer question, cacher réponse
+    if(qtext){ qtext.textContent = txt; qtext.style.display = ''; }
+    if(ansBlk) ansBlk.classList.remove('visible');
+    if(wrap)   wrap.classList.remove('ans-revealed');
+  }
+
   qtext.style.opacity='';
-
-  // Réponse : bloc vert séparé sur le grand écran
-  const fsAnsBlock = document.getElementById('fs-ansblock');
-  const fsAnsText  = document.getElementById('fs-anstext');
-  if(fsAnsBlock && fsAnsText){
-    if(data.showAns && data.answer){
-      fsAnsText.textContent = data.answer;
-      fsAnsBlock.style.display = 'block';
-    } else {
-      fsAnsBlock.style.display = 'none';
-      fsAnsText.textContent = '';
-    }
-  }
-
-  // Compte à rebours grand écran : déclenché quand la question change
-  const newQText = txt;
-  if(document.body.classList.contains('tv-display-mode') && newQText && newQText !== _lastDisplayQText){
-    _lastDisplayQText = newQText;
-    startFsCountdown();
-  }
-
   const pts=data.pts || 0;
   document.getElementById('fs-pts').textContent= pts ? `${pts} point${String(pts).includes('-')||(+pts)>1?'s':''}` : '';
   const bt=document.getElementById('fs-board-timer');
   if(bt) bt.textContent=String(data.timer ?? 10).padStart(2,'0');
+
   const teams=data.teams || [];
   const half=Math.ceil(teams.length/2);
   const maxScore=Math.max(0,...teams.map(t=>t.score||0));
@@ -2417,6 +2485,13 @@ function renderDisplayData(data){
   }
   side(teams.slice(0,half),'fspanel-left');
   side(teams.slice(half),'fspanel-right');
+
+  // Compte à rebours grand écran : déclenché quand la question change
+  if(document.body.classList.contains('tv-display-mode') && txt && txt !== _lastDisplayQText){
+    _lastDisplayQText = txt;
+    startFsCountdown(teams);
+  }
+
   renderBuzzerStatus();
 }
 
@@ -2670,23 +2745,29 @@ function openFscreen(){
   publishDisplayState();
   copyTvLink();
 
-  // Texte de la question
-  document.getElementById('fs-cat').textContent=q.cat;
-  const fqimg=document.getElementById('fs-qimage');
-  const qtxt = q.type==='image' && q.img ? "C'est quoi/qui ?" : (Array.isArray(q.question) ? q.question.join('  •  ') : (q.q || q.question || ''));
-  if(q.type==='image' && q.img){
-    if(fqimg){fqimg.src=q.img;fqimg.style.display='block';}
-  } else {
-    if(fqimg){fqimg.style.display='none';fqimg.src='';}
-  }
-  document.getElementById('fs-qtext').textContent = qtxt;
+  const wrap   = document.getElementById('fs-question-wrap');
+  const qtext  = document.getElementById('fs-qtext');
+  const ansBlk = document.getElementById('fs-ansblock');
+  const ansTxt = document.getElementById('fs-anstext');
+  const fqimg  = document.getElementById('fs-qimage');
 
-  // Réponse verte (masquée par défaut à l'ouverture)
-  const fsAns = document.getElementById('fs-ansblock');
-  const fsAnsTxt = document.getElementById('fs-anstext');
-  if(fsAns && fsAnsTxt){
-    if(S.showAns && q.a){ fsAnsTxt.textContent=q.a; fsAns.style.display='block'; }
-    else { fsAns.style.display='none'; fsAnsTxt.textContent=''; }
+  document.getElementById('fs-cat').textContent=q.cat;
+  const qtxt = q.type==='image' && q.img
+    ? "C'est quoi/qui ?"
+    : (Array.isArray(q.question) ? q.question.join('  •  ') : (q.q || q.question || ''));
+
+  if(q.type==='image' && q.img){ fqimg.src=q.img; fqimg.style.display='block'; }
+  else { fqimg.style.display='none'; fqimg.src=''; }
+
+  if(S.showAns && q.a){
+    if(qtext)  qtext.style.display = 'none';
+    if(ansTxt) ansTxt.textContent = q.a;
+    if(ansBlk) ansBlk.classList.add('visible');
+    if(wrap)   wrap.classList.add('ans-revealed');
+  } else {
+    if(qtext){ qtext.textContent = qtxt; qtext.style.display=''; }
+    if(ansBlk) ansBlk.classList.remove('visible');
+    if(wrap)   wrap.classList.remove('ans-revealed');
   }
 
   const pts=q.pts;
@@ -2694,17 +2775,13 @@ function openFscreen(){
   const boardTimer=document.getElementById('fs-board-timer');
   if(boardTimer) boardTimer.textContent='10';
 
-  // Répartir équipes : gauche / droite
   const teams=[...S.teams];
   const half=Math.ceil(teams.length/2);
-  const left=teams.slice(0,half);
-  const right=teams.slice(half);
-
+  const maxScore=Math.max(...(S.teams.length?S.teams.map(t=>t.score):[0]));
   function renderFsTeams(arr,elId){
     const el=document.getElementById(elId);
     if(!arr.length){el.style.display='none';return;}
     el.style.display='flex';
-    const maxScore=Math.max(...S.teams.map(t=>t.score));
     el.innerHTML=arr.map(t=>`
       <div class="fs-tcard ${t.score===maxScore&&t.score>0?'leader':''}">
         <div class="fs-tav">${t.name.slice(0,2).toUpperCase()}</div>
@@ -2712,16 +2789,15 @@ function openFscreen(){
         <div class="fs-tscore">${t.score}</div>
       </div>`).join('');
   }
-
-  renderFsTeams(left,'fspanel-left');
-  renderFsTeams(right,'fspanel-right');
+  renderFsTeams(teams.slice(0,half),'fspanel-left');
+  renderFsTeams(teams.slice(half),'fspanel-right');
   publishDisplayState();
 
   document.getElementById('fscreen').classList.add('vis');
 
-  // Compte à rebours à l'ouverture du plein écran local
+  // Countdown plein écran local
   _lastDisplayQText = qtxt;
-  startFsCountdown();
+  startFsCountdown(teams);
 }
 
 function closeFscreen(){
